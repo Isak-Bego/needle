@@ -2,7 +2,6 @@
 #define NEURON_H
 #include <iostream>
 #include "../random-generators/randomBiasGenerator.h"
-#include "../activation-functions/sigmoid.h"
 
 class Neuron {
     float activation = 0.0;
@@ -30,7 +29,7 @@ public:
 
     std::vector<float> &getWeights() { return this->weights; }
     float getBias() const{ return this->bias; }
-    void setActivation(const float weightedSum) { this->activation = sigmoid(weightedSum); }
+    void setActivation(const float activation) { this->activation = activation; }
     float getActivation() const { return this->activation; }
 };
 

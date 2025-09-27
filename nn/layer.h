@@ -2,6 +2,7 @@
 #define LAYER_H
 #include "neuron.h"
 #include "../random-generators/randomWeightGenerator.h"
+#include "../activation-functions/sigmoid.h"
 
 class Layer {
     Layer *previousLayer = nullptr;
@@ -52,17 +53,17 @@ public:
     }
 
     void forwardPass() {
-        float activation = 0.0;
+        float weightedSum = 0.0;
         for (auto &neuron: this->neurons) {
             std::vector<float> weights = neuron.getWeights();
             std::vector<float> inputs;
             for (int i = 0; i < previousLayer->neurons.size(); ++i) {
                 inputs.emplace_back(previousLayer->neurons.at(i).getActivation());
-                activation += weights.at(i) * inputs.at(i);
+                weightedSum += weights.at(i) * inputs.at(i);
             }
-            activation = static_cast<float>(activation) + neuron.getBias();
-            neuron.setActivation(activation);
-            activation = 0.0;
+            weightedSum = static_cast<float>(weightedSum) + neuron.getBias();
+            neuron.setActivation(sigmoid(weightedSum));
+            weightedSum = 0.0;
         }
     }
 };
