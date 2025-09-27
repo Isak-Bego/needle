@@ -1,18 +1,12 @@
-//
-// Created by Isak Bego on 27/9/25.
-//
-
 #ifndef NEURON_H
 #define NEURON_H
 #include <iostream>
-#include <random>
-
-std::random_device rd;
+#include "../random-generators/randomBiasGenerator.h"
 
 class Neuron {
-    float activation = static_cast<float>(rd());
+    float activation = 0.0;
     std::vector<float> weights = std::vector<float>();
-    float bias = static_cast<float>(rd());
+    float bias = static_cast<float>(generate_bias());
 
 public:
     Neuron() = default;

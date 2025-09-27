@@ -1,12 +1,7 @@
-//
-// Created by Isak Bego on 27/9/25.
-//
-
 #ifndef LAYER_H
 #define LAYER_H
-#include <iostream>
 #include "neuron.h"
-#include <random>
+#include "../random-generators/randomWeightGenerator.h"
 
 class Layer {
     Layer *previousLayer = nullptr;
@@ -30,7 +25,7 @@ public:
             const int numberOfWeights = previousLayer.neurons.size();
             std::vector<float> weights(numberOfWeights);
             for (int w = 0; w < numberOfWeights; ++w) {
-                weights[w] = static_cast<float>(rd());
+                weights[w] = static_cast<float>(generate_weight(numberOfWeights));
             }
             this->neurons.emplace_back(Neuron(weights));
         }

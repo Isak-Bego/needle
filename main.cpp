@@ -1,7 +1,3 @@
-//
-// Created by Isak Bego on 21/9/25.
-//
-
 #include <iostream>
 #include "nn/layer.h"
 
