@@ -19,6 +19,7 @@ int main() {
     hiddenLayer1.forwardPass();
     hiddenLayer2.forwardPass();
     hiddenLayer1.print();
+    hiddenLayer2.print();
 
     return 0;
 }
