@@ -1,7 +1,7 @@
 #ifndef NEURON_H
 #define NEURON_H
 #include <iostream>
-#include "../random-generators/randomBiasGenerator.h"
+#include "../utils/random-generators/randomBiasGenerator.h"
 
 class Neuron {
     float activation = 0.0;
