@@ -11,6 +11,7 @@ int main() {
 
     Network net = Network({3, 2, 3});
     net.loadTrainingData(trainingInput, trainingOutput);
-
+    net.forwardPass();
+    net.printLayers();
     return 0;
 }

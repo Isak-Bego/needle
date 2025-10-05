@@ -13,11 +13,6 @@ class Network {
       Layer& prev = this->layers.at(i-1);
       Layer& curr = this->layers.at(i);
       curr.setPreviousLayer(&prev);
-
-      //TODO: Do not forget to delete this after being done
-      std::cout<<i<<"-->"<<i-1<<std::endl;
-      curr.getPreviousLayer()->print();
-      std::cout<<std::endl;
     }
   }
 
@@ -35,13 +30,6 @@ class Network {
         std::generate(weights.begin(), weights.end(), [&](){return generate_weight(static_cast<int>(previousLayerNeuronCount));});
         neuron.setWeights(weights);
       }
-
-      //TODO: Do not forget to delete this after being done
-      std::cout<<"Initialization of the weights was successful!"<<std::endl;
-      std::cout<<i<<"-->"<<i-1<<std::endl;
-      curr.getPreviousLayer()->print();
-      std::cout<<std::endl;
-
     }
   }
 
@@ -62,13 +50,6 @@ class Network {
             return a < b;
     });
 
-    //TODO: Do not forget to delete all the print statements
-    std::cout<<"The sorted list of training outputs: "<<std::endl;
-    for (auto trainingOutput : this->trainingOutputs) {
-      std::cout<<trainingOutput << " ";
-    }
-    std::cout<<std::endl;
-
     int numberOfUniqueOutputs = 0;
     float previousOutput = 0;
     bool hasStarted = false;
@@ -83,7 +64,6 @@ class Network {
       }
     }
 
-    std::cout<<"The number of unique outputs is: "<<numberOfUniqueOutputs<<std::endl;
     return numberOfUniqueOutputs;
   }
 
@@ -97,7 +77,6 @@ public:
 
   // Loads the training data and prepares the network for training
   void loadTrainingData(const std::vector<std::vector<float>> &trainingInputs, const std::vector<float> &trainingOutputs){
-    std::cout<<"Loading training data..."<<std::endl;
 
     // Check if the sizes of the vectors are the same otherwise throw an error.
     if(trainingInputs.size() != trainingOutputs.size()) {
@@ -109,23 +88,12 @@ public:
     this->trainingOutputs = trainingOutputs;
 
     // Create an input layer and place it at the top of the vector
-    // TODO: This implementation could be replaced by a linked list
-    // TODO: Don't for get to delete all the print statements
-    std::cout<<"The training input size is: "<<static_cast<int>(this->trainingInputs.size())<<std::endl;
+    // TODO: This implementation could be replaced with a linked list
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingInputs.size()));
     // We feed the input layer with the first set of outputs
     this->feedInputLayer(0);
-
-    std::cout<<"The input layer was created successfully: "<<std::endl;
-    this->layers.front().print();
-    std::cout<<std::endl;
-
     // This is to create the output layer
     this->layers.emplace_back(getCountUniqueOutputs());
-    std::cout<<"The output layer was created successfully: "<<std::endl;
-    this->layers.back().print();
-    std::cout<<std::endl;
-
     this->wireLayers();
     this->initializeWeights();
   }
@@ -136,26 +104,11 @@ public:
     }
   }
 
-  // void forwardPass() {
-  //   for(int i = 0; i < this->training_data.size(); i++) {
-  //     std::cout<<this->training_data.size();
-  //     //This is odd because it does not show all the iterations, but only the first one. This has to be investigated.
-  //     std::vector<Neuron> tempNeurons = this->layers.at(0).getNeurons();
-  //     std::vector<int> inputValues = std::get<0>(this->training_data.at(i));
-  //
-  //     for (int j = 0; j < tempNeurons.size(); j++) {
-  //       std::cout<<inputValues[j]<<" ";
-  //       tempNeurons[j].setActivation(inputValues[j]);
-  //     }
-  //
-  //     std::cout<<"iteration"<<i<<std::endl;
-  //     this->layers.at(0).setNeurons(tempNeurons);
-  //     //Forward pass form the second layer until the end
-  //     for(int j = 1; j < this->layers.size(); j++) {
-  //       this->layers.at(j).forwardPass();
-  //     }
-  //   }
-  // }
+  void forwardPass() {
+      for(std::size_t j = 1; j < this->layers.size(); j++) {
+        this->layers.at(j).forwardPass();
+      }
+  }
 
 };
 #endif //NETWORK_H
