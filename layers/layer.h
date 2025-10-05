@@ -27,10 +27,7 @@ public:
 
         for (int n = 0; n < numberOfNeurons; ++n) {
             const int numberOfWeights = previousLayer->neurons.size();
-            std::vector<float> weights(numberOfWeights);
-            for (int w = 0; w < numberOfWeights; ++w) {
-                weights[w] = static_cast<float>(generate_weight(numberOfWeights));
-            }
+            std::vector<float> weights = this->generateWeights(numberOfWeights);
             this->neurons.emplace_back(Neuron(weights));
         }
     }
@@ -62,6 +59,15 @@ public:
             weightedSum = 0.0;
         }
     }
+
+    std::vector<float> generateWeights(const int numberOfWeights) {
+        std::vector<float> weights;
+        for (int w = 0; w < numberOfWeights; ++w) {
+            weights.push_back(static_cast<float>(generate_weight(numberOfWeights)));
+        }
+        return weights;
+    }
+
 };
 
 

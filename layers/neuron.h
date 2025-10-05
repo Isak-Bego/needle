@@ -28,6 +28,7 @@ public:
     }
 
     std::vector<float> &getWeights() { return this->weights; }
+    void setWeights(std::vector<float> weights) { this->weights = weights; }
     float getBias() const{ return this->bias; }
     void setActivation(const float activation) { this->activation = activation; }
     float getActivation() const { return this->activation; }
