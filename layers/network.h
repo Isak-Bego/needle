@@ -4,8 +4,7 @@
 
 class Network {
   std::vector<Layer> layers;
-  std::vector<std::vector<float>> trainingInputs;
-  std::vector<float> trainingOutputs;
+  std::vector<std::pair<std::vector<float>, float>> trainingData;
 
   void wireLayers () {
     for (std::size_t i = 1; i < layers.size(); i++) {
@@ -33,34 +32,35 @@ class Network {
     }
   }
 
-  void feedInputLayer(int inputSetNumber) {
+  void feedInputLayer(int inputSetNumber = 0) {
     // Assign the activation of the input layer based on the training inputs
     std::vector<Neuron>& neurons = this->layers.front().getNeurons();
     for (std::size_t i = 0; i < neurons.size(); i++) {
-      neurons.at(i).setActivation(this->trainingInputs.at(i)[inputSetNumber]);
+      neurons.at(i).setActivation(this->trainingData.at(i).first[inputSetNumber]);
     }
   }
 
   int getCountUniqueOutputs() {
     // We first sort our outputs so that we make the counting algorithm faster
-    // TODO: We need to find a better solution for this, because we are only sorting one of the vectors.
-    sort(this->trainingOutputs.begin(), this->trainingOutputs.end(),
-        [](const int& a,
-           const int& b) {
-            return a < b;
+    sort(this->trainingData.begin(), this->trainingData.end(),
+        [](const auto& a,
+           const auto& b) {
+            return a.second < b.second;
     });
 
     int numberOfUniqueOutputs = 0;
     float previousOutput = 0;
     bool hasStarted = false;
-    for(auto trainingOutput : this->trainingOutputs) {
+
+    // The training pair consists of: <inputVector, expectedOutput>
+    for(auto& trainingPair : this->trainingData) {
       if (!hasStarted){
         ++numberOfUniqueOutputs;
-        previousOutput = trainingOutput;
+        previousOutput = trainingPair.second;
         hasStarted = true;
-      }else if (trainingOutput != previousOutput) {
+      }else if (trainingPair.second != previousOutput) {
         ++numberOfUniqueOutputs;
-        previousOutput = trainingOutput;
+        previousOutput = trainingPair.second;
       }
     }
 
@@ -76,26 +76,19 @@ public:
   }
 
   // Loads the training data and prepares the network for training
-  void loadTrainingData(const std::vector<std::vector<float>> &trainingInputs, const std::vector<float> &trainingOutputs){
+  void loadTrainingData(const std::vector<std::pair<std::vector<float>, float>> &trainingData) {
 
-    // Check if the sizes of the vectors are the same otherwise throw an error.
-    if(trainingInputs.size() != trainingOutputs.size()) {
-      throw std::logic_error("The training data is incomplete. Check the sizes of your data vectors");
-    }
-
-    // Load the data into the corresponding instance variables
-    this->trainingInputs = trainingInputs;
-    this->trainingOutputs = trainingOutputs;
+    this->trainingData = trainingData;
 
     // Create an input layer and place it at the top of the vector
     // TODO: This implementation could be replaced with a linked list
-    this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingInputs.size()));
-    // We feed the input layer with the first set of outputs
-    this->feedInputLayer(0);
+    this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.size()));
     // This is to create the output layer
     this->layers.emplace_back(getCountUniqueOutputs());
     this->wireLayers();
     this->initializeWeights();
+    // We feed the input layer with the first set of outputs
+    this->feedInputLayer();
   }
 
   void printLayers() {
