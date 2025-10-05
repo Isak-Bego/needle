@@ -4,8 +4,8 @@
 
 class Network {
   std::vector<Layer> layers;
-  std::vector<std::vector<int>> trainingInputs;
-  std::vector<int> trainingOutputs;
+  std::vector<std::vector<float>> trainingInputs;
+  std::vector<float> trainingOutputs;
 
   void wireLayers () {
     for (std::size_t i = 1; i < layers.size(); i++) {
@@ -45,8 +45,17 @@ class Network {
     }
   }
 
+  void feedInputLayer(int inputSetNumber) {
+    // Assign the activation of the input layer based on the training inputs
+    std::vector<Neuron>& neurons = this->layers.front().getNeurons();
+    for (std::size_t i = 0; i < neurons.size(); i++) {
+      neurons.at(i).setActivation(this->trainingInputs.at(i)[inputSetNumber]);
+    }
+  }
+
   int getCountUniqueOutputs() {
     // We first sort our outputs so that we make the counting algorithm faster
+    // TODO: We need to find a better solution for this, because we are only sorting one of the vectors.
     sort(this->trainingOutputs.begin(), this->trainingOutputs.end(),
         [](const int& a,
            const int& b) {
@@ -61,7 +70,7 @@ class Network {
     std::cout<<std::endl;
 
     int numberOfUniqueOutputs = 0;
-    int previousOutput = 0;
+    float previousOutput = 0;
     bool hasStarted = false;
     for(auto trainingOutput : this->trainingOutputs) {
       if (!hasStarted){
@@ -87,7 +96,7 @@ public:
   }
 
   // Loads the training data and prepares the network for training
-  void loadTrainingData(const std::vector<std::vector<int>> &trainingInputs, const std::vector<int> &trainingOutputs){
+  void loadTrainingData(const std::vector<std::vector<float>> &trainingInputs, const std::vector<float> &trainingOutputs){
     std::cout<<"Loading training data..."<<std::endl;
 
     // Check if the sizes of the vectors are the same otherwise throw an error.
@@ -104,6 +113,9 @@ public:
     // TODO: Don't for get to delete all the print statements
     std::cout<<"The training input size is: "<<static_cast<int>(this->trainingInputs.size())<<std::endl;
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingInputs.size()));
+    // We feed the input layer with the first set of outputs
+    this->feedInputLayer(0);
+
     std::cout<<"The input layer was created successfully: "<<std::endl;
     this->layers.front().print();
     std::cout<<std::endl;
