@@ -1,6 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 #include "layer.h"
+#include "../utils/helperFunctions.h"
 
 class Network {
   std::vector<Layer> layers;
@@ -40,7 +41,7 @@ class Network {
     }
   }
 
-  int getCountUniqueOutputs() {
+  std::vector<float> getDistinctOutputs() {
     // We first sort our outputs so that we make the counting algorithm faster
     sort(this->trainingData.begin(), this->trainingData.end(),
         [](const auto& a,
@@ -48,23 +49,23 @@ class Network {
             return a.second < b.second;
     });
 
-    int numberOfUniqueOutputs = 0;
+    std::vector<float> uniqueOutputs;
     float previousOutput = 0;
     bool hasStarted = false;
 
     // The training pair consists of: <inputVector, expectedOutput>
     for(auto& trainingPair : this->trainingData) {
       if (!hasStarted){
-        ++numberOfUniqueOutputs;
+        uniqueOutputs.push_back(trainingPair.second);
         previousOutput = trainingPair.second;
         hasStarted = true;
       }else if (trainingPair.second != previousOutput) {
-        ++numberOfUniqueOutputs;
+        uniqueOutputs.push_back(trainingPair.second);
         previousOutput = trainingPair.second;
       }
     }
 
-    return numberOfUniqueOutputs;
+    return uniqueOutputs;
   }
 
 
@@ -84,7 +85,7 @@ public:
     // TODO: This implementation could be replaced with a linked list
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
     // This is to create the output layer
-    this->layers.emplace_back(getCountUniqueOutputs());
+    this->layers.emplace_back(getDistinctOutputs().size());
     this->wireLayers();
     this->initializeWeights();
     // We feed the input layer with the first set of outputs
@@ -101,6 +102,25 @@ public:
       for(std::size_t j = 1; j < this->layers.size(); j++) {
         this->layers.at(j).forwardPass();
       }
+  }
+
+  float getMeanSquaredError() {
+    float meanSquaredError = 0;
+
+    std::vector<float> distinctOutputs = getDistinctOutputs();
+    std::vector<Neuron> outputNeurons = this->layers.back().getNeurons();
+
+    for(std::size_t i = 0; i < this->trainingData.size(); i++) {
+      feedInputLayer(static_cast<int>(i));
+      int targetNeuronPosition = helper::find(distinctOutputs, this->trainingData.at(i).second);
+      for(std::size_t j = 0; j < distinctOutputs.size(); j++) {
+        Neuron& neuron = outputNeurons.at(j);
+        if (j == targetNeuronPosition) meanSquaredError += std::pow(1.0 - neuron.getActivation(), 2.0);
+        else meanSquaredError += std::pow(0.0 - neuron.getActivation(), 2.0);
+      }
+    }
+
+    return meanSquaredError/this->trainingData.size();
   }
 
 };
