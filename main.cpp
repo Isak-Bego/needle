@@ -12,6 +12,5 @@ int main() {
     net.loadTrainingData(trainingData);
     net.forwardPass();
     net.printLayers();
-    net.printTrainingData();
     return 0;
 }

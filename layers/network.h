@@ -36,7 +36,7 @@ class Network {
     // Assign the activation of the input layer based on the training inputs
     std::vector<Neuron>& neurons = this->layers.front().getNeurons();
     for (std::size_t i = 0; i < neurons.size(); i++) {
-      neurons.at(i).setActivation(this->trainingData.at(i).first[inputSetNumber]);
+      neurons.at(i).setActivation(this->trainingData.at(inputSetNumber).first[i]);
     }
   }
 
@@ -69,8 +69,8 @@ class Network {
 
 
 public:
-  explicit Network(const std::vector<int> &layerSizes) {
-    for (auto layerSize : layerSizes) {
+  explicit Network(const std::vector<int> &hiddenLayerSizes) {
+    for (auto layerSize : hiddenLayerSizes) {
       this->layers.emplace_back(layerSize);
     }
   }
@@ -82,7 +82,7 @@ public:
 
     // Create an input layer and place it at the top of the vector
     // TODO: This implementation could be replaced with a linked list
-    this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.size()));
+    this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
     // This is to create the output layer
     this->layers.emplace_back(getCountUniqueOutputs());
     this->wireLayers();
