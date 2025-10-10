@@ -12,7 +12,7 @@
 #include <random>
 #include <cmath>
 
-float generate_bias(){
+double generate_bias(){
     // Step 1: Create a random number generator (engine)
     std::random_device rd;  // non-deterministic seed
     std::mt19937 gen(rd()); // Mersenne Twister engine

@@ -5,7 +5,7 @@
 
 class Network {
   std::vector<Layer> layers;
-  std::vector<std::pair<std::vector<float>, float>> trainingData;
+  std::vector<std::pair<std::vector<double>, double>> trainingData;
 
   void wireLayers () {
     for (std::size_t i = 1; i < layers.size(); i++) {
@@ -26,7 +26,7 @@ class Network {
       const auto previousLayerNeuronCount = prev.getNeurons().size();
 
       for(Neuron& neuron : curr.getNeurons()) {
-        std::vector<float> weights(previousLayerNeuronCount);
+        std::vector<double> weights(previousLayerNeuronCount);
         std::generate(weights.begin(), weights.end(), [&](){return generate_weight(static_cast<int>(previousLayerNeuronCount));});
         neuron.setWeights(weights);
       }
@@ -41,7 +41,7 @@ class Network {
     }
   }
 
-  std::vector<float> getDistinctOutputs() {
+  std::vector<double> getDistinctOutputs() {
     // We first sort our outputs so that we make the counting algorithm faster
     sort(this->trainingData.begin(), this->trainingData.end(),
         [](const auto& a,
@@ -49,8 +49,8 @@ class Network {
             return a.second < b.second;
     });
 
-    std::vector<float> uniqueOutputs;
-    float previousOutput = 0;
+    std::vector<double> uniqueOutputs;
+    double previousOutput = 0;
     bool hasStarted = false;
 
     // The training pair consists of: <inputVector, expectedOutput>
@@ -77,7 +77,7 @@ public:
   }
 
   // Loads the training data and prepares the network for training
-  void loadTrainingData(const std::vector<std::pair<std::vector<float>, float>> &trainingData) {
+  void loadTrainingData(const std::vector<std::pair<std::vector<double>, double>> &trainingData) {
 
     this->trainingData = trainingData;
 
@@ -104,10 +104,10 @@ public:
       }
   }
 
-  float getMeanSquaredError() {
-    float meanSquaredError = 0;
+  double getMeanSquaredError() {
+    double meanSquaredError = 0;
 
-    std::vector<float> distinctOutputs = getDistinctOutputs();
+    std::vector<double> distinctOutputs = getDistinctOutputs();
     std::vector<Neuron> outputNeurons = this->layers.back().getNeurons();
 
     for(std::size_t i = 0; i < this->trainingData.size(); i++) {

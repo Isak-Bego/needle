@@ -4,18 +4,18 @@
 #include "../utils/random-generators/randomBiasGenerator.h"
 
 class Neuron {
-    float activation = 0.0;
-    std::vector<float> weights = std::vector<float>();
-    float bias = static_cast<float>(generate_bias());
+    double activation = 0.0;
+    std::vector<double> weights = std::vector<double>();
+    double bias = static_cast<double>(generate_bias());
 
 public:
     Neuron() = default;
 
-    explicit Neuron(const float activation) {
+    explicit Neuron(const double activation) {
         this->activation = activation;
     }
 
-    explicit Neuron(const std::vector<float> &weights) {
+    explicit Neuron(const std::vector<double> &weights) {
         this->weights = weights;
     }
 
@@ -27,11 +27,11 @@ public:
         }
     }
 
-    std::vector<float> &getWeights() { return this->weights; }
-    void setWeights(std::vector<float> weights) { this->weights = weights; }
-    float getBias() const{ return this->bias; }
-    void setActivation(const float activation) { this->activation = activation; }
-    float getActivation() const { return this->activation; }
+    std::vector<double> &getWeights() { return this->weights; }
+    void setWeights(std::vector<double> weights) { this->weights = weights; }
+    double getBias() const{ return this->bias; }
+    void setActivation(const double activation) { this->activation = activation; }
+    double getActivation() const { return this->activation; }
 };
 
 #endif //NEURON_H

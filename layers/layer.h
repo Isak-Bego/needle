@@ -27,7 +27,7 @@ public:
 
         for (int n = 0; n < numberOfNeurons; ++n) {
             const int numberOfWeights = previousLayer->neurons.size();
-            std::vector<float> weights = this->generateWeights(numberOfWeights);
+            std::vector<double> weights = this->generateWeights(numberOfWeights);
             this->neurons.emplace_back(Neuron(weights));
         }
     }
@@ -46,24 +46,24 @@ public:
 
     // Other methods
     void forwardPass() {
-        float weightedSum = 0.0;
+        double weightedSum = 0.0;
         for (auto &neuron: this->neurons) {
-            std::vector<float> weights = neuron.getWeights();
-            std::vector<float> inputs;
+            std::vector<double> weights = neuron.getWeights();
+            std::vector<double> inputs;
             for (int i = 0; i < previousLayer->neurons.size(); ++i) {
                 inputs.emplace_back(previousLayer->neurons.at(i).getActivation());
                 weightedSum += weights.at(i) * inputs.at(i);
             }
-            weightedSum = static_cast<float>(weightedSum) + neuron.getBias();
+            weightedSum = static_cast<double>(weightedSum) + neuron.getBias();
             neuron.setActivation(sigmoid(weightedSum));
             weightedSum = 0.0;
         }
     }
 
-    std::vector<float> generateWeights(const int numberOfWeights) {
-        std::vector<float> weights;
+    std::vector<double> generateWeights(const int numberOfWeights) {
+        std::vector<double> weights;
         for (int w = 0; w < numberOfWeights; ++w) {
-            weights.push_back(static_cast<float>(generate_weight(numberOfWeights)));
+            weights.push_back(static_cast<double>(generate_weight(numberOfWeights)));
         }
         return weights;
     }

@@ -6,8 +6,12 @@
 #define SIGMOID_H
 #include <cmath>
 
-float sigmoid(float x){
-  return 1 / (1 + exp(-x));
+double sigmoid(double x){
+  return 1.0 / (1.0 + exp(-x));
+}
+
+double sigmoid_derivative(double sigmoid_output) {
+  return sigmoid_output * (1.0 - sigmoid_output);
 }
 
 #endif //SIGMOID_H
