@@ -14,11 +14,18 @@ class Node {
     float gradient = 0.0f;
     bool var = false;
     Neuron *neuron_link = nullptr;
+    std::vector<Node*> ownedNodes; // Track nodes we created
 
 public:
     explicit Node(float value, bool isVariable) {
         this->value = value;
         this->var = isVariable;
+    }
+
+    ~Node() {
+        for (Node* n : ownedNodes) {
+            delete n;
+        }
     }
 
     Node(float value, Node *left, Node *right, char operation) {
@@ -39,14 +46,16 @@ public:
         this->gradient = n.gradient;
     }
 
-    Node operator+(Node &right) {
-        Node *temp = new Node(*this);
-        return Node(this->value + right.value, temp, &right, '+');
+    Node* operator+(Node& right) {
+        Node* result = new Node(this->value + right.value, this, &right, '+');
+        ownedNodes.push_back(result);
+        return result;
     }
 
-    Node operator*(Node &right) {
-        Node *temp = new Node(*this);
-        return Node(this->value * right.value, temp, &right, '*');
+    Node* operator*(Node& right) {
+        Node* result = new Node(this->value * right.value, this, &right, '*');
+        ownedNodes.push_back(result);
+        return result;
     }
 
     float get_value() {
@@ -85,7 +94,7 @@ public:
         }
 
         // 1) Reverse-mode pass using an explicit stack
-        std::stack<std::tuple<Node*, float> > nodeStack;
+        std::stack<std::tuple<Node *, float> > nodeStack;
         nodeStack.emplace(this, 1.0f);
 
         while (!nodeStack.empty()) {
@@ -95,9 +104,7 @@ public:
 
             // Accumulate gradient if this node is a leaf variable
             if (tempNode->var) {
-                std::cout<<"Seed: "<<tempSeed<<" ";
                 tempNode->gradient += tempSeed;
-                std::cout<<"Gradiant: "<<tempNode->gradient<<std::endl;
             }
 
             // Push children exactly once per node
@@ -107,12 +114,12 @@ public:
 
                 switch (tempNode->operation) {
                     case '+':
-                        if (R) nodeStack.emplace(R, tempSeed);
-                        if (L) nodeStack.emplace(L, tempSeed);
+                        if (R && R != nullptr) nodeStack.emplace(R, tempSeed);
+                        if (L && L != nullptr) nodeStack.emplace(L, tempSeed);
                         break;
                     case '*':
-                        if (R) nodeStack.emplace(R, (L ? L->value : 0.0f) * tempSeed);
-                        if (L) nodeStack.emplace(L, (R ? R->value : 0.0f) * tempSeed);
+                        if (R && R != nullptr) nodeStack.emplace(R, (L->value * tempSeed));
+                        if (L && L != nullptr) nodeStack.emplace(L, (R->value * tempSeed));
                         break;
                     default:
                         break;
@@ -127,52 +134,21 @@ public:
 
 int main() {
     Node a = Node(3.0, true);
-    Node b = Node(3.0, true);
-    Node c = Node(5.0, true);
-    Node d = Node(4.0, true);
+    Node b = Node(3.9, true);
+    Node c = Node(6.0, true);
+    Node d = Node(4.6, true);
 
-    Node e = a + b;
-    e = e * c;
-    e = e + d;
+    Node* e = b + a;
+    e = (*e) * d;
+    e = (*e) + c;
 
-    e.computePartials();
 
-    std::cout << a.get_gradient()<< std::endl;
-    std::cout << b.get_gradient()<< std::endl;
-    std::cout << c.get_gradient()<< std::endl;
-    std::cout << d.get_gradient()<< std::endl;
+    e->computePartials();
 
-    // std::vector<float> inputs = {2.4, 3.5, 4.7, 2.3, 5.8, 9.4, 2.3, 4.6};
-    // std::vector<float> weights = {3, 3, 3, 3, 3 ,3 ,3, 3};
-    // std::vector<Node> inputNodes;
-    // std::vector<Node> weightNodes;
-    //
-    //
-    // for (auto in : inputs) {
-    //     inputNodes.emplace_back(in);
-    // }
-    //
-    // for (auto w : weights) {
-    //     weightNodes.emplace_back(w);
-    // }
-    //
-    // Node nodeSum = Node(0.0f);
-    // float sum = 0.0f;
-    // for(auto i = 0; i < inputNodes.size(); i++) {
-    //     Node prod = inputNodes.at(i) * weightNodes.at(i);
-    //     sum += inputs.at(i) * weights.at(i);
-    //     nodeSum = nodeSum + prod;
-    // }
-    //
-    // std::cout<<nodeSum.get_value()<<std::endl;
-    // std::cout<<sum<<std::endl;
-    // std::vector<std::pair<std::vector<float>, float>> trainingData = {{{1, 2, 3}, 7}, {{4, 5, 6}, 8}, {{7, 8, 9}, 9}, {{2, 4, 6}, 12}};
-    //
-    // Network net = Network({3, 2, 3});
-    // net.loadTrainingData(trainingData);
-    // net.forwardPass();
-    // net.printLayers();
-    //
-    // std::cout<<std::endl<<"The mean squared error is: "<<net.getMeanSquaredError();
+    std::cout << a.get_gradient() << std::endl;
+    std::cout << b.get_gradient() << std::endl;
+    std::cout << c.get_gradient() << std::endl;
+    std::cout<< d.get_gradient() << std::endl;
+
     return 0;
 }
