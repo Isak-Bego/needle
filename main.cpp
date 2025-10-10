@@ -14,7 +14,6 @@ class Node {
     double gradient = 0.0;
     bool var = false;
     bool isSigmoidApplied = false;
-    Neuron *neuron_link = nullptr;
     std::vector<Node*> ownedNodes; // Track nodes we created
 
 public:
