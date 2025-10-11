@@ -82,7 +82,6 @@ public:
     this->trainingData = trainingData;
 
     // Create an input layer and place it at the top of the vector
-    // TODO: This implementation could be replaced with a linked list
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
     // This is to create the output layer
     this->layers.emplace_back(getDistinctOutputs().size());
@@ -103,25 +102,5 @@ public:
         this->layers.at(j).forwardPass();
       }
   }
-
-  double getMeanSquaredError() {
-    double meanSquaredError = 0;
-
-    std::vector<double> distinctOutputs = getDistinctOutputs();
-    std::vector<Neuron> outputNeurons = this->layers.back().getNeurons();
-
-    for(std::size_t i = 0; i < this->trainingData.size(); i++) {
-      feedInputLayer(static_cast<int>(i));
-      int targetNeuronPosition = helper::find(distinctOutputs, this->trainingData.at(i).second);
-      for(std::size_t j = 0; j < distinctOutputs.size(); j++) {
-        Neuron& neuron = outputNeurons.at(j);
-        if (j == targetNeuronPosition) meanSquaredError += std::pow(1.0 - neuron.getActivation(), 2.0);
-        else meanSquaredError += std::pow(0.0 - neuron.getActivation(), 2.0);
-      }
-    }
-
-    return meanSquaredError/this->trainingData.size();
-  }
-
 };
 #endif //NETWORK_H

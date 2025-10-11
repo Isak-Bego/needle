@@ -28,7 +28,7 @@ public:
 
         for (int n = 0; n < numberOfNeurons; ++n) {
             const int numberOfWeights = static_cast<int>(previousLayer->neurons.size());
-            std::vector<double> weights = this->generateWeights(numberOfWeights);
+            std::vector<double> weights = generateWeights(numberOfWeights);
             this->neurons.emplace_back(weights);
         }
     }
@@ -47,20 +47,19 @@ public:
 
     // Other methods
     void forwardPass() {
-        for (Neuron &neuron: this->neurons) {
+        for (Neuron neuron: this->neurons) {
             std::vector<Node> weights = neuron.getWeights();
-            std::vector<Node> inputs;
             Node *neuronActivation = neuron.getActivation();
 
             for (int i = 0; i < previousLayer->neurons.size(); ++i) {
-                inputs.emplace_back(previousLayer->neurons.at(i).getActivation());
-
                 // We sum over all the products with the weights
-                Node *products = weights.at(i) * inputs.at(i);
-                neuronActivation = (*neuronActivation) + products;
+                Node *product = weights.at(i) * *this->previousLayer->neurons.at(i).getActivation();
+                std::cout<<"Product: "<<product->get_value()<<std::endl;
+                neuronActivation = *neuronActivation + *product;
             }
 
             neuronActivation = *neuronActivation + neuron.getBias();
+            std::cout<<"Neuron Activation: "<<neuronActivation->get_value()<<std::endl;
         }
     }
 

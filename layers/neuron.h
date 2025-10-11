@@ -13,13 +13,11 @@ public:
     Neuron() = default;
 
     explicit Neuron(const double act) {
-        this->activation.set_value(act);
+        this->setActivation(act);
     }
 
     explicit Neuron(const std::vector<double> &weights) {
-        for (double weight: weights) {
-            this->weights.emplace_back(weight, true);
-        }
+        this->setWeights(weights);
     }
 
     void print() const {
@@ -31,9 +29,13 @@ public:
     }
 
     std::vector<Node> &getWeights() { return this->weights; }
-    void setWeights(const std::vector<Node> &weights) { this->weights = weights; }
+    void setWeights(const std::vector<double> &weights) {
+        for (double weight : weights) {
+            this->weights.emplace_back(weight, true);
+        }
+    }
     Node &getBias() { return this->bias; }
-    void setActivation(const Node &activation) { this->activation = activation; }
+    void setActivation(const double &activation) { this->activation.set_value(activation); }
     Node *getActivation() { return &this->activation; }
 };
 
