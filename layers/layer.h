@@ -3,6 +3,7 @@
 #include "neuron.h"
 #include "../utils/random-generators/randomWeightGenerator.h"
 #include "../utils/activation-functions/sigmoid.h"
+#include "../utils/expressionNode.h"
 
 class Layer {
     Layer *previousLayer = nullptr;
@@ -26,9 +27,9 @@ public:
 
 
         for (int n = 0; n < numberOfNeurons; ++n) {
-            const int numberOfWeights = previousLayer->neurons.size();
+            const int numberOfWeights = static_cast<int>(previousLayer->neurons.size());
             std::vector<double> weights = this->generateWeights(numberOfWeights);
-            this->neurons.emplace_back(Neuron(weights));
+            this->neurons.emplace_back(weights);
         }
     }
 
@@ -46,21 +47,24 @@ public:
 
     // Other methods
     void forwardPass() {
-        double weightedSum = 0.0;
-        for (auto &neuron: this->neurons) {
-            std::vector<double> weights = neuron.getWeights();
-            std::vector<double> inputs;
+        for (Neuron &neuron: this->neurons) {
+            std::vector<Node> weights = neuron.getWeights();
+            std::vector<Node> inputs;
+            Node *neuronActivation = neuron.getActivation();
+
             for (int i = 0; i < previousLayer->neurons.size(); ++i) {
                 inputs.emplace_back(previousLayer->neurons.at(i).getActivation());
-                weightedSum += weights.at(i) * inputs.at(i);
+
+                // We sum over all the products with the weights
+                Node *products = weights.at(i) * inputs.at(i);
+                neuronActivation = (*neuronActivation) + products;
             }
-            weightedSum = static_cast<double>(weightedSum) + neuron.getBias();
-            neuron.setActivation(sigmoid(weightedSum));
-            weightedSum = 0.0;
+
+            neuronActivation = *neuronActivation + neuron.getBias();
         }
     }
 
-    std::vector<double> generateWeights(const int numberOfWeights) {
+    static std::vector<double> generateWeights(const int numberOfWeights) {
         std::vector<double> weights;
         for (int w = 0; w < numberOfWeights; ++w) {
             weights.push_back(static_cast<double>(generate_weight(numberOfWeights)));

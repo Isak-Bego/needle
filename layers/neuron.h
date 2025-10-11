@@ -34,7 +34,7 @@ public:
     void setWeights(const std::vector<Node> &weights) { this->weights = weights; }
     Node &getBias() { return this->bias; }
     void setActivation(const Node &activation) { this->activation = activation; }
-    Node &getActivation() { return this->activation; }
+    Node *getActivation() { return &this->activation; }
 };
 
 #endif //NEURON_H
