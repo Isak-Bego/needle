@@ -20,12 +20,13 @@ public:
         this->setWeights(weights);
     }
 
-    void print() const {
+    void print() {
         std::cout << "Activation: " << activation.get_value() << std::endl;
         std::cout << "Bias: " << bias.get_value() << std::endl;
-        for (const Node &w: weights) {
-            std::cout << w.get_value() << std::endl;
+        for (auto i = 0; i < weights.size(); i++) {
+            std::cout <<"W"<<i<<" : "<<"Value: "<< weights.at(i).get_value() <<", Gradient: "<<weights.at(i).get_gradient()<< std::endl;
         }
+        std::cout << std::endl;
     }
 
     std::vector<Node> &getWeights() { return this->weights; }

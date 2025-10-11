@@ -40,9 +40,11 @@ public:
     void setPreviousLayer(Layer *previousLayer) { this->previousLayer = previousLayer; }
 
     void print() {
+        std::cout<<std::endl<<"---------Layer Begin------------"<<std::endl<<std::endl;
         for (auto &neuron: this->neurons) {
             neuron.print();
         }
+        std::cout<<"-----------Layer End-------------"<<std::endl;
     }
 
     // Other methods
