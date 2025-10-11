@@ -2,36 +2,39 @@
 #define NEURON_H
 #include <iostream>
 #include "../utils/random-generators/randomBiasGenerator.h"
+#include "../utils/expressionNode.h"
 
 class Neuron {
-    double activation = 0.0;
-    std::vector<double> weights = std::vector<double>();
-    double bias = static_cast<double>(generate_bias());
+    Node activation = Node(0.0, false);
+    std::vector<Node> weights;
+    Node bias = Node(static_cast<double>(generate_bias()), false);
 
 public:
     Neuron() = default;
 
-    explicit Neuron(const double activation) {
-        this->activation = activation;
+    explicit Neuron(const double act) {
+        this->activation.set_value(act);
     }
 
     explicit Neuron(const std::vector<double> &weights) {
-        this->weights = weights;
-    }
-
-    void print() const {
-        std::cout << "Activation: " << activation << std::endl;
-        std::cout << "Bias: " << bias << std::endl;
-        for (const auto &w : weights) {
-            std::cout << w << std::endl;
+        for (double weight: weights) {
+            this->weights.emplace_back(weight, true);
         }
     }
 
-    std::vector<double> &getWeights() { return this->weights; }
-    void setWeights(std::vector<double> weights) { this->weights = weights; }
-    double getBias() const{ return this->bias; }
-    void setActivation(const double activation) { this->activation = activation; }
-    double getActivation() const { return this->activation; }
+    void print() const {
+        std::cout << "Activation: " << activation.get_value() << std::endl;
+        std::cout << "Bias: " << bias.get_value() << std::endl;
+        for (const Node &w: weights) {
+            std::cout << w.get_value() << std::endl;
+        }
+    }
+
+    std::vector<Node> &getWeights() { return this->weights; }
+    void setWeights(const std::vector<Node> &weights) { this->weights = weights; }
+    Node &getBias() { return this->bias; }
+    void setActivation(const Node &activation) { this->activation = activation; }
+    Node &getActivation() { return this->activation; }
 };
 
 #endif //NEURON_H

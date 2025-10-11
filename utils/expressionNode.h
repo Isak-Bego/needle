@@ -1,13 +1,10 @@
-//
-// Created by Isak Bego on 11/10/25.
-//
-
 #ifndef EXPRESSIONNODE_H
 #define EXPRESSIONNODE_H
 
 #include "./activation-functions/sigmoid.h"
 #include <stack>
 #include <tuple>
+
 // Auto-forward pass
 class Node {
     double value = 0.0;
@@ -18,7 +15,7 @@ class Node {
     double gradient = 0.0;
     bool var = false;
     bool isSigmoidApplied = false;
-    std::vector<Node*> ownedNodes; // Track nodes we created
+    std::vector<Node *> ownedNodes; // Track nodes we created
 
 public:
     explicit Node(double value, bool isVariable) {
@@ -27,7 +24,7 @@ public:
     }
 
     ~Node() {
-        for (Node* n : ownedNodes) {
+        for (Node *n: ownedNodes) {
             delete n;
         }
     }
@@ -50,23 +47,27 @@ public:
         this->gradient = n.gradient;
     }
 
-    Node* operator+(Node& right) {
-        Node* result = new Node(this->value + right.value, this, &right, '+');
+    Node *operator+(Node &right) {
+        Node *result = new Node(this->value + right.value, this, &right, '+');
         ownedNodes.push_back(result);
         return result;
     }
 
-    Node* operator*(Node& right) {
-        Node* result = new Node(this->value * right.value, this, &right, '*');
+    Node *operator*(Node &right) {
+        Node *result = new Node(this->value * right.value, this, &right, '*');
         ownedNodes.push_back(result);
         return result;
     }
 
-    double get_value() {
+    double get_value() const {
         return value;
     }
 
-    Node *get_left() {
+    void set_value(const double &tempVal) {
+        this->value = tempVal;
+    }
+
+    Node *get_left() const{
         return left;
     }
 
@@ -111,7 +112,7 @@ public:
             auto tempSeed = std::get<1>(nodeStack.top());
             nodeStack.pop();
 
-            if(tempNode->isSigmoidApplied == true) {
+            if (tempNode->isSigmoidApplied == true) {
                 tempSeed *= sigmoid_derivative(tempNode->get_value());
             }
 

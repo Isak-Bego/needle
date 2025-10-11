@@ -4,4 +4,5 @@ project(needle)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(needle
-    main.cpp)
+    main.cpp
+        layers/neuron.h)
