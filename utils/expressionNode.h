@@ -89,6 +89,9 @@ public:
     }
 
     void computePartials() {
+
+        // TODO: Investigate the following step as it takes way too much time to propagate when the tree
+        // is big
         // 0) Reset flags/gradients so repeated calls work predictably
         {
             std::stack<Node *> st;
@@ -119,6 +122,7 @@ public:
             // Accumulate gradient if this node is a leaf variable
             if (tempNode->var) {
                 tempNode->gradient += tempSeed;
+                std::cout<<"Gradient update"<<tempNode->get_gradient()<<std::endl;
             }
 
             // Push children exactly once per node

@@ -12,9 +12,14 @@ int main() {
     net.loadTrainingData(trainingData);
     net.forwardPass();
     net.printLayers();
+    std::vector<Neuron> &neurons = net.layers.back().getNeurons();
 
+    // TODO: When computing the partials starting form the output layer, every activation node should be
+    // updated with the respective gradient, which is currently not happening. When you run this you get 0s for the
+    // gradients meaning that something is wrong! Re-run and re-try
+    neurons.back().getActivation().computePartials();
+    std::cout<<"Gradient :"<<net.layers.back().getNeurons().at(0).getActivation().get_gradient();
 
-    // Node class tests
     // Node a = Node(1, false);
     // Node b = Node(2, true);
     // Node c = Node(3, true);

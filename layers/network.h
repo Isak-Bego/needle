@@ -3,7 +3,10 @@
 #include "layer.h"
 #include "../utils/helperFunctions.h"
 
+//TODO: After you are done inspecting the functionality of Computing Partials for each neuron, make the class instance
+// var private so that they abide the encapsulation principle.
 class Network {
+public:
   std::vector<Layer> layers;
   std::vector<std::pair<std::vector<double>, double>> trainingData;
 
@@ -68,8 +71,6 @@ class Network {
     return uniqueOutputs;
   }
 
-
-public:
   explicit Network(const std::vector<int> &hiddenLayerSizes) {
     for (auto layerSize : hiddenLayerSizes) {
       this->layers.emplace_back(layerSize);
