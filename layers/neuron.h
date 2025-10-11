@@ -36,7 +36,8 @@ public:
     }
     Node &getBias() { return this->bias; }
     void setActivation(const double &activation) { this->activation.set_value(activation); }
-    Node *getActivation() { return &this->activation; }
+    Node &getActivation() { return this->activation; }
+    void setActivationNode(const Node &activation) { this->activation = activation; }
 };
 
 #endif //NEURON_H

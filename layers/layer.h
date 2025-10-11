@@ -47,19 +47,23 @@ public:
 
     // Other methods
     void forwardPass() {
-        for (Neuron neuron: this->neurons) {
-            std::vector<Node> weights = neuron.getWeights();
-            Node *neuronActivation = neuron.getActivation();
+        if (this->previousLayer == nullptr) {
+            return;
+        }
+        auto &previousNeurons = this->previousLayer->neurons;
 
-            for (int i = 0; i < previousLayer->neurons.size(); ++i) {
-                // We sum over all the products with the weights
-                Node *product = weights.at(i) * *this->previousLayer->neurons.at(i).getActivation();
-                std::cout<<"Product: "<<product->get_value()<<std::endl;
-                neuronActivation = *neuronActivation + *product;
+        for (Neuron &neuron: this->neurons) {
+            std::vector<Node> &weights = neuron.getWeights();
+            Node *neuronActivation = &neuron.getActivation();
+
+            for (std::size_t i = 0; i < previousNeurons.size(); ++i) {
+                Node *product = weights.at(i) * previousNeurons.at(i).getActivation();
+                neuronActivation = (*neuronActivation) * (*product);
             }
 
             neuronActivation = *neuronActivation + neuron.getBias();
-            std::cout<<"Neuron Activation: "<<neuronActivation->get_value()<<std::endl;
+            neuronActivation->apply_sigmoid();
+            neuron.setActivationNode(*neuronActivation);
         }
     }
 
