@@ -85,7 +85,7 @@ public:
     // Create an input layer and place it at the top of the vector
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
     // This is to create the output layer
-    this->layers.emplace_back(getDistinctOutputs().size());
+    this->layers.emplace_back(getDistinctOutputs().size(), LayerType::SOFTMAX);
     this->wireLayers();
     this->initializeWeights();
     // We feed the input layer with the first set of outputs

@@ -2,9 +2,10 @@
 #define EXPRESSIONNODE_H
 
 #include "utils/activation-functions/sigmoid.h"
+#include "utils/activation-functions/softmax.h"
 #include <stack>
 #include <tuple>
-
+#include <vector>
 
 // Auto-forward pass
 class Node {
@@ -16,7 +17,13 @@ class Node {
     double gradient = 0.0;
     bool var = false;
     bool isSigmoidApplied = false;
+    bool isSoftmaxApplied = false;
     std::vector<Node *> ownedNodes; // Track nodes we created
+
+    // Softmax-specific data
+    std::vector<Node*> softmaxGroup;  // All nodes in the same softmax operation
+    std::vector<double> softmaxOutputs;  // Cached softmax outputs
+    int softmaxIndex = -1;  // This node's index in the softmax group
 
 public:
     explicit Node(const double value, const bool isVariable) {
@@ -46,6 +53,11 @@ public:
         this->isVisited = n.isVisited;
         this->var = n.var;
         this->gradient = n.gradient;
+        this->isSigmoidApplied = n.isSigmoidApplied;
+        this->isSoftmaxApplied = n.isSoftmaxApplied;
+        this->softmaxGroup = n.softmaxGroup;
+        this->softmaxOutputs = n.softmaxOutputs;
+        this->softmaxIndex = n.softmaxIndex;
     }
 
     Node* operator+(Node &right) {
@@ -95,8 +107,36 @@ public:
         this->isSigmoidApplied = true;
     }
 
+    /**
+     * Apply softmax to a group of nodes together.
+     * This must be called on all nodes in the group before computePartials.
+     *
+     * @param nodes Vector of all nodes that should be normalized together
+     */
+    static void apply_softmax(std::vector<Node*>& nodes) {
+        if (nodes.empty()) return;
+
+        // Collect values (logits) before softmax
+        std::vector<double> logits;
+        logits.reserve(nodes.size());
+        for (Node* node : nodes) {
+            logits.push_back(node->value);
+        }
+
+        // Compute softmax
+        std::vector<double> softmax_outputs = softmax(logits);
+
+        // Update each node with its softmax output and metadata
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            nodes.at(i)->value = softmax_outputs.at(i);
+            nodes.at(i)->isSoftmaxApplied = true;
+            nodes.at(i)->softmaxGroup = nodes;  // Store reference to the group
+            nodes.at(i)->softmaxOutputs = softmax_outputs;  // Cache outputs
+            nodes.at(i)->softmaxIndex = static_cast<int>(i);  // Store this node's index
+        }
+    }
+
     void computePartials() {
-        // is big
         // 0) Reset flags/gradients so repeated calls work predictably
         std::stack<Node *> st;
         st.push(this);
@@ -116,19 +156,40 @@ public:
         nodeStack.emplace(this, 1.0);
 
         while (!nodeStack.empty()) {
-            const auto tempNode = std::get<0>(nodeStack.top());
-            auto tempSeed = std::get<1>(nodeStack.top());
+            Node* tempNode = std::get<0>(nodeStack.top());
+            double tempSeed = std::get<1>(nodeStack.top());
             nodeStack.pop();
 
+            // Handle sigmoid activation
             if (tempNode->isSigmoidApplied == true) {
                 tempSeed *= sigmoid_derivative(tempNode->get_value());
+            }
+
+            // Handle softmax activation
+            if (tempNode->isSoftmaxApplied == true) {
+                // Softmax backward pass requires all nodes in the group
+                // We need to distribute gradients according to the Jacobian
+
+                if (!tempNode->softmaxGroup.empty() && !tempNode->softmaxOutputs.empty()) {
+                    // Compute the contribution of this gradient seed to all logits
+                    // using: dL/dx_i = y_i * (dL/dy_i - sum_j(dL/dy_j * y_j))
+                    const int idx = tempNode->softmaxIndex;
+                    const std::vector<double>& y = tempNode->softmaxOutputs;
+                    // This gradient is for output idx, so we create grad_output vector
+                    std::vector<double> grad_output(y.size(), 0.0);
+                    grad_output.at(idx) = tempSeed;
+                    // Compute gradient w.r.t. all logits
+                    std::vector<double> grad_logits = softmax_backward(y, grad_output);
+                    // Distribute gradients to all nodes in the softmax group
+                    // Note: We need to accumulate these at the pre-softmax values
+                    // So we modify tempSeed to represent the gradient at the input
+                    tempSeed = grad_logits.at(idx);
+                }
             }
 
             // Accumulate gradient if this node is a leaf variable
             if (tempNode->var) {
                 tempNode->gradient += tempSeed;
-                // std::cout<<"Temp seed: "<<tempSeed<<std::endl;
-                // std::cout<<"TempNode gradient"<<tempNode->gradient<<std::endl;
             }
 
             // Push children exactly once per node
@@ -143,11 +204,9 @@ public:
                         break;
                     case '*':
                         if (R && R != nullptr) {
-                            // std::cout<<"Temp seed update: "<<tempSeed<<" * "<<L->get_value()<<" = "<<(L->get_value() * tempSeed)<<std::endl;
                             nodeStack.emplace(R, (L->get_value() * tempSeed));
                         }
                         if (L && L != nullptr) {
-                            // std::cout<<"Temp seed update: "<<tempSeed<<" * "<<R->get_value()<<" = "<<(R->get_value() * tempSeed)<<std::endl;
                             nodeStack.emplace(L, (R->get_value() * tempSeed));
                         }
                         break;
