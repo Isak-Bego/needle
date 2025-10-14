@@ -60,7 +60,7 @@ public:
 
             for (std::size_t i = 0; i < previousNeurons.size(); ++i) {
                 Node *product = weights.at(i) * previousNeurons.at(i).getActivation();
-                neuronActivation = (*neuronActivation) * (*product);
+                neuronActivation = (*neuronActivation) + (*product);
             }
 
             neuronActivation = *neuronActivation + neuron.getBias();
