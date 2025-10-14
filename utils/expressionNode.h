@@ -5,6 +5,7 @@
 #include <stack>
 #include <tuple>
 
+
 // Auto-forward pass
 class Node {
     double value = 0.0;
@@ -18,18 +19,18 @@ class Node {
     std::vector<Node *> ownedNodes; // Track nodes we created
 
 public:
-    explicit Node(double value, bool isVariable) {
+    explicit Node(const double value, const bool isVariable) {
         this->value = value;
         this->var = isVariable;
     }
 
     ~Node() {
-        for (Node *n: ownedNodes) {
+        for (const Node *n: ownedNodes) {
             delete n;
         }
     }
 
-    Node(double value, Node *left, Node *right, char operation) {
+    Node(const double value, Node *left, Node *right, const char operation) {
         this->value = value;
         this->left = left;
         this->right = right;
@@ -47,14 +48,20 @@ public:
         this->gradient = n.gradient;
     }
 
-    Node *operator+(Node &right) {
-        Node *result = new Node(this->value + right.value, this, &right, '+');
+    Node* operator+(Node &right) {
+        auto *result = new Node(this->value + right.value, this, &right, '+');
         ownedNodes.push_back(result);
         return result;
     }
 
-    Node *operator*(Node &right) {
-        Node *result = new Node(this->value * right.value, this, &right, '*');
+    Node* operator*(Node &right) {
+        auto *result = new Node(this->value * right.value, this, &right, '*');
+        ownedNodes.push_back(result);
+        return result;
+    }
+
+    Node* operator/(Node& right) {
+        auto* result = new Node(this->value / right.value, this, &right, '/');
         ownedNodes.push_back(result);
         return result;
     }
@@ -71,15 +78,15 @@ public:
         return left;
     }
 
-    Node *get_right() {
+    Node *get_right() const{
         return right;
     }
 
-    double get_gradient() {
+    double get_gradient() const{
         return gradient;
     }
 
-    char get_operation() {
+    char get_operation() const{
         return operation;
     }
 
@@ -109,7 +116,7 @@ public:
         nodeStack.emplace(this, 1.0);
 
         while (!nodeStack.empty()) {
-            auto tempNode = std::get<0>(nodeStack.top());
+            const auto tempNode = std::get<0>(nodeStack.top());
             auto tempSeed = std::get<1>(nodeStack.top());
             nodeStack.pop();
 
@@ -143,6 +150,11 @@ public:
                             // std::cout<<"Temp seed update: "<<tempSeed<<" * "<<R->get_value()<<" = "<<(R->get_value() * tempSeed)<<std::endl;
                             nodeStack.emplace(L, (R->get_value() * tempSeed));
                         }
+                        break;
+                    case '/':
+                        // y = L / R  ->  dy/dL = 1/R, dy/dR = -L/(R^2)
+                        if (R && R != nullptr) nodeStack.emplace(R, (-L->get_value() / (R->get_value() * R->get_value())) * tempSeed);
+                        if (L && L != nullptr) nodeStack.emplace(L, (1.0 / R->get_value()) * tempSeed);
                         break;
                     default:
                         break;

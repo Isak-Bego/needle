@@ -3,16 +3,25 @@
 #include "neuron.h"
 #include "utils/random-generators/randomWeightGenerator.h"
 #include "utils/expressionNode.h"
+#include <cmath>
+
+enum class LayerType {
+    SIGMOID,
+    SOFTMAX
+};
 
 class Layer {
     Layer *previousLayer = nullptr;
     std::vector<Neuron> neurons;
+    LayerType type = LayerType::SIGMOID;
 
 public:
     Layer() = default;
 
-    explicit Layer(int numberOfNeurons) {
+    explicit Layer(int numberOfNeurons, const LayerType type=LayerType::SIGMOID) {
         this->neurons.reserve(numberOfNeurons); // optional optimization
+        this->type = type;
+
         for (int n = 0; n < numberOfNeurons; ++n) {
             this->neurons.emplace_back(); // calls Neuron() constructor
         }
@@ -20,10 +29,10 @@ public:
 
     // In dense layers like these the number of weights in a neuron corresponds to the number of neurons in the
     // previous layer
-    Layer(int numberOfNeurons, Layer *previousLayer) {
+    Layer(int numberOfNeurons, Layer *previousLayer, const LayerType type=LayerType::SIGMOID) {
         this->previousLayer = previousLayer;
         this->neurons.reserve(numberOfNeurons);
-
+        this->type = type;
 
         for (int n = 0; n < numberOfNeurons; ++n) {
             const int numberOfWeights = static_cast<int>(previousLayer->neurons.size());
@@ -46,13 +55,9 @@ public:
         std::cout<<"-----------Layer End-------------"<<std::endl;
     }
 
-    // Other methods
-    void forwardPass() {
-        if (this->previousLayer == nullptr) {
-            return;
-        }
-        auto &previousNeurons = this->previousLayer->neurons;
 
+    // Other methods
+    void sigmoidForwardPass(std::vector<Neuron>& previousNeurons) {
         for (Neuron &neuron: this->neurons) {
             std::vector<Node> &weights = neuron.getWeights();
             Node *neuronActivation = &neuron.getActivation();
@@ -68,8 +73,30 @@ public:
         }
     }
 
+    void softmaxForwardPass(std::vector<Neuron>& previousNeurons) {
+        return ;
+    }
+
+    void forwardPass() {
+        if (this->previousLayer == nullptr) {
+            return;
+        }
+
+        auto &previousNeurons = this->previousLayer->neurons;
+
+        switch (this->previousLayer->type) {
+            case LayerType::SIGMOID:
+                this->sigmoidForwardPass(previousNeurons);
+                break;
+            case LayerType::SOFTMAX:
+                this->softmaxForwardPass(previousNeurons);
+                break;
+        }
+    }
+
     static std::vector<double> generateWeights(const int numberOfWeights) {
         std::vector<double> weights;
+        weights.reserve(numberOfWeights);
         for (int w = 0; w < numberOfWeights; ++w) {
             weights.push_back(static_cast<double>(generate_weight(numberOfWeights)));
         }
