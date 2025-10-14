@@ -1,9 +1,8 @@
 #ifndef LAYER_H
 #define LAYER_H
 #include "neuron.h"
-#include "../utils/random-generators/randomWeightGenerator.h"
-#include "../utils/activation-functions/sigmoid.h"
-#include "../utils/expressionNode.h"
+#include "utils/random-generators/randomWeightGenerator.h"
+#include "utils/expressionNode.h"
 
 class Layer {
     Layer *previousLayer = nullptr;

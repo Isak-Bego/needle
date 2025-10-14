@@ -1,7 +1,7 @@
 #ifndef EXPRESSIONNODE_H
 #define EXPRESSIONNODE_H
 
-#include "./activation-functions/sigmoid.h"
+#include "utils/activation-functions/sigmoid.h"
 #include <stack>
 #include <tuple>
 
@@ -120,8 +120,8 @@ public:
             // Accumulate gradient if this node is a leaf variable
             if (tempNode->var) {
                 tempNode->gradient += tempSeed;
-                std::cout<<"Temp seed: "<<tempSeed<<std::endl;
-                std::cout<<"TempNode gradient"<<tempNode->gradient<<std::endl;
+                // std::cout<<"Temp seed: "<<tempSeed<<std::endl;
+                // std::cout<<"TempNode gradient"<<tempNode->gradient<<std::endl;
             }
 
             // Push children exactly once per node
@@ -136,11 +136,11 @@ public:
                         break;
                     case '*':
                         if (R && R != nullptr) {
-                            std::cout<<"Temp seed update: "<<tempSeed<<" * "<<L->get_value()<<" = "<<(L->get_value() * tempSeed)<<std::endl;
+                            // std::cout<<"Temp seed update: "<<tempSeed<<" * "<<L->get_value()<<" = "<<(L->get_value() * tempSeed)<<std::endl;
                             nodeStack.emplace(R, (L->get_value() * tempSeed));
                         }
                         if (L && L != nullptr) {
-                            std::cout<<"Temp seed update: "<<tempSeed<<" * "<<R->get_value()<<" = "<<(R->get_value() * tempSeed)<<std::endl;
+                            // std::cout<<"Temp seed update: "<<tempSeed<<" * "<<R->get_value()<<" = "<<(R->get_value() * tempSeed)<<std::endl;
                             nodeStack.emplace(L, (R->get_value() * tempSeed));
                         }
                         break;

@@ -1,8 +1,8 @@
 #ifndef NEURON_H
 #define NEURON_H
 #include <iostream>
-#include "../utils/random-generators/randomBiasGenerator.h"
-#include "../utils/expressionNode.h"
+#include "utils/random-generators/randomBiasGenerator.h"
+#include "utils/expressionNode.h"
 
 class Neuron {
     Node activation = Node(0.0, false);

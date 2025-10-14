@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 #include "layer.h"
-#include "../utils/helperFunctions.h"
+#include "utils/helperFunctions.h"
 
 //TODO: After you are done inspecting the functionality of Computing Partials for each neuron, make the class instance
 // var private so that they abide the encapsulation principle.

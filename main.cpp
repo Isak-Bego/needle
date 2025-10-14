@@ -8,17 +8,16 @@ int main() {
     std::vector<float> trainingOutput = {1, 0, 1, 0};
     std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2, 3}, 10}, {{4, 5, 6}, 10}, {{7, 8, 9}, 10}, {{2, 4, 6}, 10}};
 
-    Network net = Network({2});
+    Network net = Network({2, 3, 3, 4});
     net.loadTrainingData(trainingData);
     net.forwardPass();
     std::vector<Neuron> &neurons = net.layers.back().getNeurons();
 
-    std::cout<<"Let's check the connections of the neurons: "<<std::endl;
-    std::cout<<neurons.back().getActivation().get_left()->get_value()<<std::endl;
-    std::cout<<neurons.back().getActivation().get_right()->get_value()<<std::endl;
     neurons.back().getActivation().computePartials();
     net.printLayers();
 
+
+    //TODO: Write tests for the node class
 
     Node a = Node(1, false);
     Node b = Node(2, true);
