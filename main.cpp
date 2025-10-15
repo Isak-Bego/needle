@@ -4,9 +4,9 @@
 
 int main() {
 
-    std::vector<std::vector<float>> trainingInput = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {2, 4, 6}};
+    std::vector<std::vector<float>> trainingInput = {{1, 2}, {4, 5}, {7, 8}, {2, 4}};
     std::vector<float> trainingOutput = {1, 0, 1, 0};
-    std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2, 3}, 10}, {{4, 5, 6}, 12}, {{7, 8, 9}, 9}, {{2, 4, 6}, 8}};
+    std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2}, 1}, {{4, 5}, 2}, {{7, 8}, 1}, {{2, 4}, 1}};
 
     Network net = Network({2});
     net.loadTrainingData(trainingData);

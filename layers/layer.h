@@ -7,7 +7,7 @@
 enum class LayerType {
     SIGMOID,
     SOFTMAX,
-    LOSS
+    CROSSENTROPYLOSS
 };
 
 class Layer {
@@ -107,6 +107,14 @@ public:
         }
     }
 
+    void crossEntropyForwardPass(std::vector<Neuron>& previousNeurons) {
+        auto* crossEntropyError = new Node(0.0, false);
+        for (Neuron &previousNeuron: previousNeurons) {
+            crossEntropyError = *crossEntropyError + *previousNeuron.getActivation().apply_negative_natural_log();;
+        }
+        this->neurons.front().setActivationNode(*crossEntropyError);
+    }
+
     void forwardPass() {
         if (this->previousLayer == nullptr) {
             return;
@@ -121,6 +129,10 @@ public:
             case LayerType::SOFTMAX:
                 this->softmaxForwardPass(previousNeurons);
                 break;
+            case LayerType::CROSSENTROPYLOSS:
+                this->crossEntropyForwardPass(previousNeurons);
+                break;
+
         }
     }
 

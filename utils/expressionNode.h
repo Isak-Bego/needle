@@ -5,6 +5,7 @@
 #include "utils/activation-functions/softmax.h"
 #include <stack>
 #include <tuple>
+#include <cmath>
 #include <vector>
 
 // Auto-forward pass
@@ -17,6 +18,7 @@ class Node {
     double gradient = 0.0;
     bool var = false;
     bool isSigmoidApplied = false;
+    bool isNegNaturalLogApplied = false;
     bool isSoftmaxApplied = false;
     std::vector<Node *> ownedNodes; // Track nodes we created
 
@@ -55,6 +57,7 @@ public:
         this->gradient = n.gradient;
         this->isSigmoidApplied = n.isSigmoidApplied;
         this->isSoftmaxApplied = n.isSoftmaxApplied;
+        this->isNegNaturalLogApplied = n.isNegNaturalLogApplied;
         this->softmaxGroup = n.softmaxGroup;
         this->softmaxOutputs = n.softmaxOutputs;
         this->softmaxIndex = n.softmaxIndex;
@@ -136,6 +139,13 @@ public:
         }
     }
 
+    Node* apply_negative_natural_log() const{
+        auto* resultNode = new Node(*this);
+        resultNode->set_value(-log(resultNode->get_value()));
+        resultNode->isNegNaturalLogApplied = true;
+        return resultNode;
+    }
+
     void computePartials() {
         // 0) Reset flags/gradients so repeated calls work predictably
         std::stack<Node *> st;
@@ -183,8 +193,12 @@ public:
                     // Distribute gradients to all nodes in the softmax group
                     // Note: We need to accumulate these at the pre-softmax values
                     // So we modify tempSeed to represent the gradient at the input
-                    tempSeed *= grad_logits.at(idx); //TODO: Check the mathematical validity of this
+                    tempSeed = grad_logits.at(idx); //TODO: Check the mathematical validity of this
                 }
+            }
+
+            if (tempNode->isNegNaturalLogApplied == true) {
+                tempSeed *= -1/tempNode->value;
             }
 
             // Accumulate gradient if this node is a leaf variable
