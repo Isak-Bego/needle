@@ -6,7 +6,8 @@
 
 enum class LayerType {
     SIGMOID,
-    SOFTMAX
+    SOFTMAX,
+    LOSS
 };
 
 class Layer {

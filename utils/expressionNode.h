@@ -183,7 +183,7 @@ public:
                     // Distribute gradients to all nodes in the softmax group
                     // Note: We need to accumulate these at the pre-softmax values
                     // So we modify tempSeed to represent the gradient at the input
-                    tempSeed = grad_logits.at(idx);
+                    tempSeed *= grad_logits.at(idx); //TODO: Check the mathematical validity of this
                 }
             }
 
@@ -203,12 +203,8 @@ public:
                         if (L && L != nullptr) nodeStack.emplace(L, tempSeed);
                         break;
                     case '*':
-                        if (R && R != nullptr) {
-                            nodeStack.emplace(R, (L->get_value() * tempSeed));
-                        }
-                        if (L && L != nullptr) {
-                            nodeStack.emplace(L, (R->get_value() * tempSeed));
-                        }
+                        if (R && R != nullptr) nodeStack.emplace(R, (L->get_value() * tempSeed));
+                        if (L && L != nullptr) nodeStack.emplace(L, (R->get_value() * tempSeed));
                         break;
                     case '/':
                         // y = L / R  ->  dy/dL = 1/R, dy/dR = -L/(R^2)

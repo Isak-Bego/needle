@@ -81,33 +81,4 @@ std::vector<double> softmax_backward(
     return grad_input;
 }
 
-/**
- * Alternative backward pass using full Jacobian matrix
- * (Less efficient but more explicit for understanding)
- * 
- * The Jacobian of softmax is:
- * J_ij = y_i * (delta_ij - y_j)
- * where delta_ij = 1 if i==j, 0 otherwise
- */
-std::vector<double> softmax_backward_jacobian(
-    const std::vector<double>& softmax_output,
-    const std::vector<double>& grad_output) {
-    
-    const size_t n = softmax_output.size();
-    std::vector<double> grad_input(n, 0.0);
-    
-    // For each input dimension
-    for (size_t i = 0; i < n; ++i) {
-        // Compute dL/dx_i = sum_j (dL/dy_j * dy_j/dx_i)
-        for (size_t j = 0; j < n; ++j) {
-            // dy_j/dx_i = y_j * (delta_ij - y_i)
-            double jacobian_ji = softmax_output[j] * 
-                                 ((i == j ? 1.0 : 0.0) - softmax_output[i]);
-            grad_input[i] += grad_output[j] * jacobian_ji;
-        }
-    }
-    
-    return grad_input;
-}
-
 #endif // SOFTMAX_H

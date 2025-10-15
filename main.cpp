@@ -6,7 +6,7 @@ int main() {
 
     std::vector<std::vector<float>> trainingInput = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {2, 4, 6}};
     std::vector<float> trainingOutput = {1, 0, 1, 0};
-    std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2, 3}, 10}, {{4, 5, 6}, 12}, {{7, 8, 9}, 10}, {{2, 4, 6}, 12}};
+    std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2, 3}, 10}, {{4, 5, 6}, 12}, {{7, 8, 9}, 9}, {{2, 4, 6}, 8}};
 
     Network net = Network({2});
     net.loadTrainingData(trainingData);
