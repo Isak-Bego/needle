@@ -3,13 +3,15 @@
 #include <nn_components/network.h>
 
 int main() {
-    std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2}, 1}, {{4, 5}, 2}, {{7, 8}, 1}, {{2, 4}, 1}};
+    const std::vector<std::pair<std::vector<double>, double> > trainingData = {
+        {{1, 2}, 1}, {{4, 5}, 2}, {{7, 8}, 1}, {{2, 4}, 1}
+    };
 
-    Network net = Network({2});
+    auto net = Network({2});
     net.loadTrainingData(trainingData);
     net.feedInputLayer(3);
     net.forwardPass();
-    std::vector<Neuron> &neurons = net.layers.back()->getNeurons();
+    const std::vector<Neuron> &neurons = net.getLayers().back()->getNeurons();
     neurons.back().getActivation()->computePartials();
     net.printLayers();
 

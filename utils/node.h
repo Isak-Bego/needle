@@ -1,5 +1,5 @@
-#ifndef EXPRESSIONNODE_H
-#define EXPRESSIONNODE_H
+#ifndef NODE_H
+#define NODE_H
 #include <stack>
 #include <tuple>
 #include <vector>
@@ -137,8 +137,9 @@ public:
                         if (L && L != nullptr) nodeStack.emplace(L, (R->get_value() * tempSeed));
                         break;
                     case '/':
-                        if (R && R != nullptr) nodeStack.emplace(
-                            R, (-L->get_value() / (R->get_value() * R->get_value())) * tempSeed);
+                        if (R && R != nullptr)
+                            nodeStack.emplace(
+                                R, (-L->get_value() / (R->get_value() * R->get_value())) * tempSeed);
                         if (L && L != nullptr) nodeStack.emplace(L, (1.0 / R->get_value()) * tempSeed);
                         break;
                     case 'f':
@@ -154,4 +155,4 @@ public:
     }
 };
 
-#endif //EXPRESSIONNODE_H
+#endif //NODE_H

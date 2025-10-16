@@ -5,14 +5,13 @@
 #include <utils/activation-functions/sigmoid.h>
 #include <utils/loss-functions/crossEntropy.h>
 
-//TODO: After you are done inspecting the functionality of Computing Partials for each neuron, make the class instance
-// var private so that they abide the encapsulation principle.
+
 class Network {
-public:
-    CrossEntropyLayer *errorLayer;
+    CrossEntropyLayer *errorLayer = nullptr;
     std::vector<Layer *> layers;
     std::vector<std::pair<std::vector<double>, double> > trainingData;
 
+public:
     void wireLayers() {
         for (std::size_t i = 1; i < layers.size(); i++) {
             // We provide type safety by using at since it throws an error
@@ -111,6 +110,10 @@ public:
         for (std::size_t j = 1; j < this->layers.size(); j++) {
             this->layers.at(j)->forwardPass();
         }
+    }
+
+    std::vector<Layer *> getLayers() {
+        return this->layers;
     }
 };
 #endif //NETWORK_H

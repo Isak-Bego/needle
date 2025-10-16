@@ -33,8 +33,8 @@ class CrossEntropyLayer final : public Layer {
     std::vector<double> distinctClassificationClasses;
 
 public:
-    explicit CrossEntropyLayer(const int numberOfNeurons, std::vector<double> distinctClassificationClasses = {},
-                               double expectedOutput = 0.0) : Layer(numberOfNeurons) {
+    explicit CrossEntropyLayer(const int numberOfNeurons, const std::vector<double> &distinctClassificationClasses,
+                               const double expectedOutput = 0.0) : Layer(numberOfNeurons) {
         this->expectedOutput = expectedOutput;
         this->distinctClassificationClasses = distinctClassificationClasses;
 
@@ -51,7 +51,7 @@ public:
     }
 
     void forwardPass() override {
-        Neuron prediction = (this->getPreviousLayer()->getNeurons().at(
+        const Neuron prediction = (this->getPreviousLayer()->getNeurons().at(
             helper::find(distinctClassificationClasses, expectedOutput)));
         this->getNeurons().front().getActivation()->set_value(prediction.getActivation()->get_value());
         this->getNeurons().front().getActivation()->set_left(prediction.getActivation());

@@ -6,7 +6,7 @@
 class SigmoidNode final : public Node {
 public:
     explicit SigmoidNode(Node *left) : Node(0.0, left, nullptr, 'f') {
-        this->set_value(sigmoid(left->get_value()));
+        Node::set_value(sigmoid(left->get_value()));
     }
 
     /**

@@ -14,7 +14,7 @@ class SoftmaxNode final : public Node {
     size_t index;
 
 public:
-    explicit SoftmaxNode(std::vector<Neuron> &in, std::vector<double> &out, int index)
+    explicit SoftmaxNode(std::vector<Neuron> &in, const std::vector<double> &out, int index)
         : Node(0.0, in.at(index).getActivation(), nullptr, 'f'),
           outputs(out),
           index(static_cast<size_t>(index)) {
@@ -25,11 +25,11 @@ public:
 
         std::vector<double> scalarInputs;
         scalarInputs.reserve(this->inputs.size());
-        for (Node *n: this->inputs) {
+        for (const Node *n: this->inputs) {
             scalarInputs.push_back(n->get_value());
         }
 
-        this->set_value(this->outputs.at(this->index));
+        Node::set_value(this->outputs.at(this->index));
         dinputs_.assign(outputs.size(), 0.0);
         dinputs_ = softmaxInputDerivativesFromProbabilities(scalarInputs);
     }
@@ -111,7 +111,7 @@ public:
             neuronActivationValues.push_back(neuron.getActivation()->get_value());
         }
 
-        std::vector<double> softmaxOutputs = SoftmaxNode::softmax(neuronActivationValues);
+        const std::vector<double> softmaxOutputs = SoftmaxNode::softmax(neuronActivationValues);
         for (int i = 0; i < static_cast<int>(this->getNeurons().size()); i++) {
             auto *softmax = new SoftmaxNode(this->getNeurons(), softmaxOutputs, i);
             this->getNeurons().at(i).setActivationNode(softmax);

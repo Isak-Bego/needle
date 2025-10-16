@@ -29,6 +29,10 @@ public:
         }
     }
 
+    virtual ~Layer() {
+        delete previousLayer;
+    }
+
     // Getters and setters
     std::vector<Neuron> &getNeurons() { return this->neurons; }
     void setNeurons(const std::vector<Neuron> &neurons) { this->neurons = neurons; }
