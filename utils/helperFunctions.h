@@ -2,10 +2,10 @@
 #define HELPERFUNCTIONS_H
 
 namespace helper {
-    template <typename T>
-  int find(std::vector<T> &vec, T val) {
+    template<typename T>
+    int find(std::vector<T> &vec, T val) {
         for (std::size_t i = 0; i < vec.size(); i++) {
-            if (vec[i] == val){
+            if (vec[i] == val) {
                 return i;
             }
         }

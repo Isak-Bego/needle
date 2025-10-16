@@ -3,11 +3,12 @@
 #include <cmath>
 #include <nn_components/layer.h>
 
-class SigmoidNode : public Node {
+class SigmoidNode final : public Node {
 public:
     explicit SigmoidNode(Node *left) : Node(0.0, left, nullptr, 'f') {
         this->set_value(sigmoid(left->get_value()));
     }
+
     /**
     * Computes the result of the sigmoid function for a given input
     *
@@ -43,10 +44,13 @@ public:
 };
 
 
-class SigmoidLayer : public Layer {
+class SigmoidLayer final : public Layer {
 public:
-    explicit SigmoidLayer (const int numberOfNeurons) : Layer (numberOfNeurons) {}
-    SigmoidLayer (const int numberOfNeurons, Layer *previousLayer) : Layer (numberOfNeurons, previousLayer) {}
+    explicit SigmoidLayer(const int numberOfNeurons) : Layer(numberOfNeurons) {
+    }
+
+    SigmoidLayer(const int numberOfNeurons, Layer *previousLayer) : Layer(numberOfNeurons, previousLayer) {
+    }
 
     void forwardPass() override {
         auto &previousNeurons = this->getPreviousLayer()->getNeurons();
@@ -54,7 +58,7 @@ public:
 
         for (Neuron &neuron: this->getNeurons()) {
             Node *neuronActivation = neuron.getActivation();
-            auto* sigmoid = new SigmoidNode(neuronActivation);
+            auto *sigmoid = new SigmoidNode(neuronActivation);
             neuron.setActivationNode(sigmoid);
         }
     }

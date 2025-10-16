@@ -7,25 +7,25 @@
 #include <cmath>
 #include <vector>
 
-class SoftmaxNode : public Node {
-    std::vector<Node*> inputs;
-    std::vector<double> outputs;   // y = softmax(z)
-    std::vector<double> dinputs_;  // dL/dz saved here
+class SoftmaxNode final : public Node {
+    std::vector<Node *> inputs;
+    std::vector<double> outputs; // y = softmax(z)
+    std::vector<double> dinputs_; // dL/dz saved here
     size_t index;
 
 public:
-    explicit SoftmaxNode(std::vector<Neuron>& in, std::vector<double>& out, int index)
+    explicit SoftmaxNode(std::vector<Neuron> &in, std::vector<double> &out, int index)
         : Node(0.0, in.at(index).getActivation(), nullptr, 'f'),
           outputs(out),
           index(static_cast<size_t>(index)) {
-
         inputs.reserve(in.size());
-        for (Neuron& n : in) {
+        for (Neuron &n: in) {
             this->inputs.push_back(n.getActivation());
         }
 
-        std::vector<double> scalarInputs; scalarInputs.reserve(this->inputs.size());
-        for (Node* n : this->inputs) {
+        std::vector<double> scalarInputs;
+        scalarInputs.reserve(this->inputs.size());
+        for (Node *n: this->inputs) {
             scalarInputs.push_back(n->get_value());
         }
 
@@ -43,8 +43,7 @@ public:
     // Given softmax probabilities, compute the total derivative for each input z_j.
     // This is the column-sum of the Jacobian J = diag(p) - p p^T.
     // Result will be (near) zeros due to sum(p)=1, but computed explicitly for completeness.
-    static std::vector<double> softmaxInputDerivativesFromProbabilities(const std::vector<double>& probabilities)
-    {
+    static std::vector<double> softmaxInputDerivativesFromProbabilities(const std::vector<double> &probabilities) {
         const size_t num_classes = probabilities.size();
         assert(num_classes > 0);
 
@@ -56,18 +55,17 @@ public:
             for (size_t i = 0; i < num_classes; ++i) {
                 const bool same_index = (i == j);
                 const double jac_ij = same_index
-                    ? probabilities.at(i) * (1.0 - probabilities.at(i))   // p_i * (1 - p_i)
-                    : -probabilities.at(i) * probabilities.at(j);          // -p_i * p_j
+                                          ? probabilities.at(i) * (1.0 - probabilities.at(i)) // p_i * (1 - p_i)
+                                          : -probabilities.at(i) * probabilities.at(j); // -p_i * p_j
                 column_sum += jac_ij;
             }
-            d_sum_outputs_wrt_input.at(j) = column_sum;  // will be ~0
+            d_sum_outputs_wrt_input.at(j) = column_sum; // will be ~0
         }
         return d_sum_outputs_wrt_input;
     }
 
     // Compute stable softmax probabilities from logits.
-    static std::vector<double> softmax(const std::vector<double>& logits)
-    {
+    static std::vector<double> softmax(const std::vector<double> &logits) {
         const size_t num_classes = logits.size();
         assert(num_classes > 0);
 
@@ -90,13 +88,17 @@ public:
 };
 
 
-class SoftmaxLayer : public Layer {
+class SoftmaxLayer final : public Layer {
     std::vector<double> softmaxOutputs;
-public:
-    explicit SoftmaxLayer (const int numberOfNeurons) : Layer (numberOfNeurons) {}
-    SoftmaxLayer (const int numberOfNeurons, Layer *previousLayer) : Layer (numberOfNeurons, previousLayer) {}
 
-    const std::vector<double>& getSoftmaxOutputs() const { return this->softmaxOutputs; }
+public:
+    explicit SoftmaxLayer(const int numberOfNeurons) : Layer(numberOfNeurons) {
+    }
+
+    SoftmaxLayer(const int numberOfNeurons, Layer *previousLayer) : Layer(numberOfNeurons, previousLayer) {
+    }
+
+    const std::vector<double> &getSoftmaxOutputs() const { return this->softmaxOutputs; }
 
     void forwardPass() override {
         auto &previousNeurons = this->getPreviousLayer()->getNeurons();
@@ -105,17 +107,16 @@ public:
         std::vector<double> neuronActivationValues;
         neuronActivationValues.reserve(this->getNeurons().size());
 
-        for (Neuron& neuron: this->getNeurons()) {
+        for (Neuron &neuron: this->getNeurons()) {
             neuronActivationValues.push_back(neuron.getActivation()->get_value());
         }
 
         std::vector<double> softmaxOutputs = SoftmaxNode::softmax(neuronActivationValues);
         for (int i = 0; i < static_cast<int>(this->getNeurons().size()); i++) {
-            auto* softmax = new SoftmaxNode(this->getNeurons(), softmaxOutputs, i);
+            auto *softmax = new SoftmaxNode(this->getNeurons(), softmaxOutputs, i);
             this->getNeurons().at(i).setActivationNode(softmax);
         }
     }
-
 };
 
 #endif // SOFTMAX_H

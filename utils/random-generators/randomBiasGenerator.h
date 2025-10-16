@@ -11,14 +11,14 @@
 #define RANDOMBIASGENERATOR_H
 #include <random>
 
-inline double generate_bias(){
+inline double generate_bias() {
     // Step 1: Create a random number generator (engine)
-    std::random_device rd;  // non-deterministic seed
+    std::random_device rd; // non-deterministic seed
     std::mt19937 gen(rd()); // Mersenne Twister engine
 
     // Step 2: Define a normal (Gaussian) distribution
-    double mean = 0.0;     // μ
-    double stddev = 1.0;   // σ
+    double mean = 0.0; // μ
+    double stddev = 1.0; // σ
     std::normal_distribution<double> dist(mean, stddev);
 
     return dist(gen);

@@ -21,7 +21,7 @@ public:
     }
 
     virtual ~Node() {
-        for (const Node* n : ownedNodes) delete n;
+        for (const Node *n: ownedNodes) delete n;
     }
 
     Node(const double value, Node *left, Node *right, const char operation) {
@@ -42,20 +42,20 @@ public:
         this->gradient = n.gradient;
     }
 
-    Node* operator+(Node &right) {
+    Node *operator+(Node &right) {
         auto *result = new Node(this->value + right.value, this, &right, '+');
         ownedNodes.push_back(result);
         return result;
     }
 
-    Node* operator*(Node &right) {
+    Node *operator*(Node &right) {
         auto *result = new Node(this->value * right.value, this, &right, '*');
         ownedNodes.push_back(result);
         return result;
     }
 
-    Node* operator/(Node& right) {
-        auto* result = new Node(this->value / right.value, this, &right, '/');
+    Node *operator/(Node &right) {
+        auto *result = new Node(this->value / right.value, this, &right, '/');
         ownedNodes.push_back(result);
         return result;
     }
@@ -64,27 +64,27 @@ public:
         return value;
     }
 
-    void set_value(const double &tempVal) {
+    virtual void set_value(const double &tempVal) {
         this->value = tempVal;
     }
 
-    Node *get_left() const{
+    Node *get_left() const {
         return left;
     }
 
-    void set_left(Node* left) {
+    void set_left(Node *left) {
         this->left = left;
     }
 
-    Node *get_right() const{
+    Node *get_right() const {
         return right;
     }
 
-    double get_gradient() const{
+    double get_gradient() const {
         return gradient;
     }
 
-    char get_operation() const{
+    char get_operation() const {
         return operation;
     }
 
@@ -100,7 +100,7 @@ public:
         while (!st.empty()) {
             Node *n = st.top();
             st.pop();
-            if(n->isVisited) {
+            if (n->isVisited) {
                 n->isVisited = false;
                 if (n->var) n->gradient = 0.0;
                 if (n->right != nullptr) st.push(n->right);
@@ -113,7 +113,7 @@ public:
         nodeStack.emplace(this, 1.0);
 
         while (!nodeStack.empty()) {
-            Node* tempNode = std::get<0>(nodeStack.top());
+            Node *tempNode = std::get<0>(nodeStack.top());
             double tempSeed = std::get<1>(nodeStack.top());
             nodeStack.pop();
 
@@ -137,7 +137,8 @@ public:
                         if (L && L != nullptr) nodeStack.emplace(L, (R->get_value() * tempSeed));
                         break;
                     case '/':
-                        if (R && R != nullptr) nodeStack.emplace(R, (-L->get_value() / (R->get_value() * R->get_value())) * tempSeed);
+                        if (R && R != nullptr) nodeStack.emplace(
+                            R, (-L->get_value() / (R->get_value() * R->get_value())) * tempSeed);
                         if (L && L != nullptr) nodeStack.emplace(L, (1.0 / R->get_value()) * tempSeed);
                         break;
                     case 'f':

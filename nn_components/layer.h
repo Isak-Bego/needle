@@ -6,6 +6,7 @@
 class Layer {
     Layer *previousLayer = nullptr;
     std::vector<Neuron> neurons;
+
 public:
     Layer() = default;
 
@@ -30,20 +31,20 @@ public:
 
     // Getters and setters
     std::vector<Neuron> &getNeurons() { return this->neurons; }
-    void setNeurons(const std::vector<Neuron> &neurons) {this->neurons = neurons; }
+    void setNeurons(const std::vector<Neuron> &neurons) { this->neurons = neurons; }
 
     Layer *getPreviousLayer() const { return this->previousLayer; }
     void setPreviousLayer(Layer *previousLayer) { this->previousLayer = previousLayer; }
 
     virtual void print() {
-        std::cout<<std::endl<<"---------Layer Begin------------"<<std::endl<<std::endl;
+        std::cout << std::endl << "---------Layer Begin------------" << std::endl << std::endl;
         for (auto &neuron: this->neurons) {
             neuron.print();
         }
-        std::cout<<"-----------Layer End-------------"<<std::endl;
+        std::cout << "-----------Layer End-------------" << std::endl;
     }
 
-    void calculateWeightedSum(std::vector<Neuron>& previousNeurons) {
+    void calculateWeightedSum(std::vector<Neuron> &previousNeurons) {
         for (Neuron &neuron: this->neurons) {
             std::vector<Node> &weights = neuron.getWeights();
             Node *neuronActivation = neuron.getActivation();
@@ -58,7 +59,8 @@ public:
         }
     }
 
-    virtual void forwardPass() {}
+    virtual void forwardPass() {
+    }
 
     static std::vector<double> generateWeights(const int numberOfWeights) {
         std::vector<double> weights;
