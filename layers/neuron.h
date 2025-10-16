@@ -5,7 +5,7 @@
 #include "utils/expressionNode.h"
 
 class Neuron {
-    Node activation = Node(0.0, false);
+    Node* activation = new Node(0.0, false);
     std::vector<Node> weights;
     Node bias = Node(static_cast<double>(generate_bias()), false);
 
@@ -21,7 +21,7 @@ public:
     }
 
     void print() {
-        std::cout << "Activation: " << activation.get_value() << std::endl;
+        std::cout << "Activation: " << activation->get_value() << std::endl;
         std::cout << "Bias: " << bias.get_value() << std::endl;
         for (auto i = 0; i < weights.size(); i++) {
             std::cout <<"W"<<i<<" : "<<"Value: "<< weights.at(i).get_value() <<", Gradient: "<<weights.at(i).get_gradient()<< std::endl;
@@ -36,9 +36,9 @@ public:
         }
     }
     Node &getBias() { return this->bias; }
-    void setActivation(const double &activation) { this->activation.set_value(activation); }
-    Node &getActivation() { return this->activation; }
-    void setActivationNode(const Node &activation) { this->activation = activation; }
+    void setActivation(const double &activation) { this->activation->set_value(activation); }
+    Node* getActivation() { return this->activation; }
+    void setActivationNode(Node* activation) { this->activation = activation; }
 };
 
 #endif //NEURON_H

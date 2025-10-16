@@ -1,8 +1,10 @@
 #ifndef LAYER_H
 #define LAYER_H
+
 #include "neuron.h"
 #include "utils/random-generators/randomWeightGenerator.h"
-#include "utils/expressionNode.h"
+#include "utils/activation-functions/sigmoid.h"
+#include "utils/activation-functions/softmax.h"
 
 enum class LayerType {
     SIGMOID,
@@ -57,62 +59,40 @@ public:
         std::cout<<"-----------Layer End-------------"<<std::endl;
     }
 
-    void sigmoidForwardPass(std::vector<Neuron>& previousNeurons) {
+    void calculateWeightedSum(std::vector<Neuron>& previousNeurons) {
         for (Neuron &neuron: this->neurons) {
             std::vector<Node> &weights = neuron.getWeights();
-            Node *neuronActivation = &neuron.getActivation();
+            Node *neuronActivation = neuron.getActivation();
 
             for (std::size_t i = 0; i < previousNeurons.size(); ++i) {
-                Node *product = weights.at(i) * previousNeurons.at(i).getActivation();
+                Node *product = weights.at(i) * *previousNeurons.at(i).getActivation();
                 neuronActivation = (*neuronActivation) + (*product);
             }
 
             neuronActivation = *neuronActivation + neuron.getBias();
-            neuronActivation->apply_sigmoid();
-            neuron.setActivationNode(*neuronActivation);
+            neuron.setActivationNode(neuronActivation);
         }
     }
 
-    void softmaxForwardPass(std::vector<Neuron>& previousNeurons) {
-        // Step 1: Compute weighted sums (logits) for all neurons
-        std::vector<Node*> activationNodes;
-        activationNodes.reserve(this->neurons.size());
-
+    void sigmoidForwardPass() {
         for (Neuron &neuron: this->neurons) {
-            std::vector<Node> &weights = neuron.getWeights();
-            Node *neuronActivation = &neuron.getActivation();
-
-            // Compute weighted sum: z = sum(w_i * x_i) + bias
-            for (std::size_t i = 0; i < previousNeurons.size(); ++i) {
-                Node *product = weights.at(i) * previousNeurons.at(i).getActivation();
-                neuronActivation = (*neuronActivation) + (*product);
-            }
-
-            neuronActivation = *neuronActivation + neuron.getBias();
-
-            // Store the computation graph node
-            neuron.setActivationNode(*neuronActivation);
-            activationNodes.push_back(&neuron.getActivation());
-        }
-
-        // Step 2: Apply softmax to all activation nodes at once
-        // This integrates softmax into the computational graph
-        Node::apply_softmax(activationNodes);
-
-        // Step 3: Cache the softmax outputs for reference
-        this->softmaxOutputs.clear();
-        this->softmaxOutputs.reserve(this->neurons.size());
-        for (auto& neuron : this->neurons) {
-            this->softmaxOutputs.push_back(neuron.getActivation().get_value());
+            Node *neuronActivation = neuron.getActivation();
+            auto* sigmoid = new Sigmoid(neuronActivation);
+            neuron.setActivationNode(sigmoid);
         }
     }
 
-    void crossEntropyForwardPass(std::vector<Neuron>& previousNeurons) {
-        auto* crossEntropyError = new Node(0.0, false);
-        for (Neuron &previousNeuron: previousNeurons) {
-            crossEntropyError = *crossEntropyError + *previousNeuron.getActivation().apply_negative_natural_log();;
+    void softmaxForwardPass() {
+        std::vector<double> neuronActivationValues;
+        neuronActivationValues.reserve(this->neurons.size());
+       for (int i = 0; i < static_cast<int>(this->neurons.size()); i++) {
+          neuronActivationValues.push_back(this->neurons.at(i).getActivation()->get_value());
+       }
+        std::vector<double> softmaxOutputs = Softmax::softmax(neuronActivationValues);
+        for (int i = 0; i < static_cast<int>(this->neurons.size()); i++) {
+            auto* softmax = new Softmax(this->neurons, softmaxOutputs, i);
+            this->neurons.at(i).setActivationNode(softmax);
         }
-        this->neurons.front().setActivationNode(*crossEntropyError);
     }
 
     void forwardPass() {
@@ -121,18 +101,17 @@ public:
         }
 
         auto &previousNeurons = this->previousLayer->neurons;
+        this->calculateWeightedSum(previousNeurons);
 
         switch (this->type) {
             case LayerType::SIGMOID:
-                this->sigmoidForwardPass(previousNeurons);
+                this->sigmoidForwardPass();
                 break;
             case LayerType::SOFTMAX:
-                this->softmaxForwardPass(previousNeurons);
+                this->softmaxForwardPass();
                 break;
-            case LayerType::CROSSENTROPYLOSS:
-                this->crossEntropyForwardPass(previousNeurons);
+            default:
                 break;
-
         }
     }
 

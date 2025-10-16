@@ -13,7 +13,7 @@ int main() {
     net.forwardPass();
     std::vector<Neuron> &neurons = net.layers.back().getNeurons();
 
-    neurons.back().getActivation().computePartials();
+    neurons.back().getActivation()->computePartials();
     net.printLayers();
 
 
