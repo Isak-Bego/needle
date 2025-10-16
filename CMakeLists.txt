@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # -------- Header-only library --------
-add_library(needle_lib INTERFACE)
+add_library(needle_lib INTERFACE
+        utils/loss-functions/crossEntropy.h)
 target_include_directories(needle_lib
         INTERFACE
         ${CMAKE_SOURCE_DIR}         # so you can #include "layers/neuron.h"

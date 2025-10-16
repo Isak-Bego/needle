@@ -72,6 +72,10 @@ public:
         return left;
     }
 
+    void set_left(Node* left) {
+        this->left = left;
+    }
+
     Node *get_right() const{
         return right;
     }

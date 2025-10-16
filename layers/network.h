@@ -2,6 +2,7 @@
 #define NETWORK_H
 #include "layer.h"
 #include "utils/helperFunctions.h"
+#include "utils/loss-functions/crossEntropy.h"
 
 //TODO: After you are done inspecting the functionality of Computing Partials for each neuron, make the class instance
 // var private so that they abide the encapsulation principle.
@@ -42,6 +43,7 @@ public:
     for (std::size_t i = 0; i < neurons.size(); i++) {
       neurons.at(i).setActivation(this->trainingData.at(inputSetNumber).first[i]);
     }
+    this->layers.back().setExpectedOutput(this->trainingData.at(inputSetNumber).second);
   }
 
   std::vector<double> getDistinctOutputs() {
@@ -81,12 +83,19 @@ public:
   void loadTrainingData(const std::vector<std::pair<std::vector<double>, double>> &trainingData) {
 
     this->trainingData = trainingData;
+    std::vector<double> distinctOutputs = getDistinctOutputs();
+    std::vector<Neuron> errorLayerNeurons; errorLayerNeurons.reserve(1);
 
     // Create an input layer and place it at the top of the vector
     this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
     // This is to create the output layer
     this->layers.emplace_back(getDistinctOutputs().size(), LayerType::SOFTMAX);
-    // this->layers.emplace_back(1, LayerType::CROSSENTROPYLOSS);
+    // Create the cross-entropy function that is going to calculate the error of the neural network
+    this->layers.emplace_back(1, LayerType::CROSSENTROPYLOSS, distinctOutputs);
+    auto* error = new CrossEntropy();
+    errorLayerNeurons.emplace_back();
+    errorLayerNeurons.back().setActivationNode(error);
+    this->layers.back().setNeurons(errorLayerNeurons);
     this->wireLayers();
     this->initializeWeights();
     // We feed the input layer with the first set of outputs

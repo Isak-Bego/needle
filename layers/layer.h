@@ -1,6 +1,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
+#include <utils/helperFunctions.h>
 #include "neuron.h"
 #include "utils/random-generators/randomWeightGenerator.h"
 #include "utils/activation-functions/sigmoid.h"
@@ -19,15 +20,23 @@ class Layer {
     // Store softmax outputs for backward pass
     std::vector<double> softmaxOutputs;
 
+    double expectedOutput;
+    std::vector<double> distinctClassificationClasses;
+
 public:
     Layer() = default;
 
-    explicit Layer(int numberOfNeurons, const LayerType type=LayerType::SIGMOID) {
+    explicit Layer(int numberOfNeurons, const LayerType type=LayerType::SIGMOID, std::vector<double> distinctClassificationClasses = {}, double expectedOutput = 0.0) {
         this->neurons.reserve(numberOfNeurons);
         this->type = type;
 
         for (int n = 0; n < numberOfNeurons; ++n) {
             this->neurons.emplace_back();
+        }
+
+        if (type == LayerType::CROSSENTROPYLOSS) {
+            this->expectedOutput = expectedOutput;
+            this->distinctClassificationClasses = distinctClassificationClasses;
         }
     }
 
@@ -50,6 +59,7 @@ public:
     void setPreviousLayer(Layer *previousLayer) { this->previousLayer = previousLayer; }
     LayerType getType() const { return this->type; }
     const std::vector<double>& getSoftmaxOutputs() const { return this->softmaxOutputs; }
+    void setExpectedOutput(const double expectedOutput) { this->expectedOutput = expectedOutput; }
 
     void print() {
         std::cout<<std::endl<<"---------Layer Begin------------"<<std::endl<<std::endl;
@@ -97,20 +107,30 @@ public:
         }
     }
 
+    void crossEntropyPass() {
+        Neuron prediction = (this->getPreviousLayer()->getNeurons().at(helper::find(distinctClassificationClasses, expectedOutput)));
+        this->neurons.front().getActivation()->set_value(prediction.getActivation()->get_value());
+        this->neurons.front().getActivation()->set_left(prediction.getActivation());
+    }
+
     void forwardPass() {
         if (this->previousLayer == nullptr) {
             return;
         }
 
         auto &previousNeurons = this->previousLayer->neurons;
-        this->calculateWeightedSum(previousNeurons);
 
         switch (this->type) {
             case LayerType::SIGMOID:
+                this->calculateWeightedSum(previousNeurons);
                 this->sigmoidForwardPass();
                 break;
             case LayerType::SOFTMAX:
+                this->calculateWeightedSum(previousNeurons);
                 this->softmaxForwardPass();
+                break;
+            case LayerType::CROSSENTROPYLOSS:
+                this->crossEntropyPass();
                 break;
             default:
                 break;
