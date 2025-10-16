@@ -10,9 +10,8 @@
 #ifndef RANDOMBIASGENERATOR_H
 #define RANDOMBIASGENERATOR_H
 #include <random>
-#include <cmath>
 
-double generate_bias(){
+inline double generate_bias(){
     // Step 1: Create a random number generator (engine)
     std::random_device rd;  // non-deterministic seed
     std::mt19937 gen(rd()); // Mersenne Twister engine

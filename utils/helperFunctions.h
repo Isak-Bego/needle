@@ -1,10 +1,6 @@
-//
-// Created by Isak Bego on 7/10/25.
-//
-
 #ifndef HELPERFUNCTIONS_H
 #define HELPERFUNCTIONS_H
-#include <iostream>
+
 namespace helper {
     template <typename T>
   int find(std::vector<T> &vec, T val) {

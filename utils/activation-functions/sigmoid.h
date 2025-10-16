@@ -1,12 +1,11 @@
 #ifndef SIGMOID_H
 #define SIGMOID_H
 #include <cmath>
-#include "utils/node.h"
+#include <nn_components/layer.h>
 
-
-class Sigmoid : public Node {
+class SigmoidNode : public Node {
 public:
-    explicit Sigmoid(Node *left) : Node(0.0, left, nullptr, 'f') {
+    explicit SigmoidNode(Node *left) : Node(0.0, left, nullptr, 'f') {
         this->set_value(sigmoid(left->get_value()));
     }
     /**
@@ -42,4 +41,23 @@ public:
         return sigmoid_derivative(this->get_value());
     }
 };
+
+
+class SigmoidLayer : public Layer {
+public:
+    explicit SigmoidLayer (const int numberOfNeurons) : Layer (numberOfNeurons) {}
+    SigmoidLayer (const int numberOfNeurons, Layer *previousLayer) : Layer (numberOfNeurons, previousLayer) {}
+
+    void forwardPass() override {
+        auto &previousNeurons = this->getPreviousLayer()->getNeurons();
+        calculateWeightedSum(previousNeurons);
+
+        for (Neuron &neuron: this->getNeurons()) {
+            Node *neuronActivation = neuron.getActivation();
+            auto* sigmoid = new SigmoidNode(neuronActivation);
+            neuron.setActivationNode(sigmoid);
+        }
+    }
+};
+
 #endif //SIGMOID_H

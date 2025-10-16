@@ -1,20 +1,20 @@
 #ifndef SOFTMAX_H
 #define SOFTMAX_H
-#include "utils/node.h"
-#include "layers/neuron.h"
+#include <utils/node.h>
+#include <nn_components/neuron.h>
+#include <nn_components/layer.h>
 #include <cassert>
 #include <cmath>
-#include <iostream>
 #include <vector>
 
-class Softmax : public Node {
+class SoftmaxNode : public Node {
     std::vector<Node*> inputs;
     std::vector<double> outputs;   // y = softmax(z)
     std::vector<double> dinputs_;  // dL/dz saved here
     size_t index;
 
 public:
-    explicit Softmax(std::vector<Neuron>& in, std::vector<double>& out, int index)
+    explicit SoftmaxNode(std::vector<Neuron>& in, std::vector<double>& out, int index)
         : Node(0.0, in.at(index).getActivation(), nullptr, 'f'),
           outputs(out),
           index(static_cast<size_t>(index)) {
@@ -87,6 +87,35 @@ public:
         }
         return probabilities;
     }
+};
+
+
+class SoftmaxLayer : public Layer {
+    std::vector<double> softmaxOutputs;
+public:
+    explicit SoftmaxLayer (const int numberOfNeurons) : Layer (numberOfNeurons) {}
+    SoftmaxLayer (const int numberOfNeurons, Layer *previousLayer) : Layer (numberOfNeurons, previousLayer) {}
+
+    const std::vector<double>& getSoftmaxOutputs() const { return this->softmaxOutputs; }
+
+    void forwardPass() override {
+        auto &previousNeurons = this->getPreviousLayer()->getNeurons();
+        calculateWeightedSum(previousNeurons);
+
+        std::vector<double> neuronActivationValues;
+        neuronActivationValues.reserve(this->getNeurons().size());
+
+        for (Neuron& neuron: this->getNeurons()) {
+            neuronActivationValues.push_back(neuron.getActivation()->get_value());
+        }
+
+        std::vector<double> softmaxOutputs = SoftmaxNode::softmax(neuronActivationValues);
+        for (int i = 0; i < static_cast<int>(this->getNeurons().size()); i++) {
+            auto* softmax = new SoftmaxNode(this->getNeurons(), softmaxOutputs, i);
+            this->getNeurons().at(i).setActivationNode(softmax);
+        }
+    }
+
 };
 
 #endif // SOFTMAX_H

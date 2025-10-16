@@ -14,10 +14,14 @@
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
-    <libraryRoots>
-      <file path="$PROJECT_DIR$/layers" />
-      <file path="$PROJECT_DIR$/utils" />
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/nn_components" />
       <file path="$PROJECT_DIR$/utils/activation-functions" />
+      <file path="$PROJECT_DIR$/utils/loss-functions" />
+      <file path="$PROJECT_DIR$/utils/random-generators" />
+    </sourceRoots>
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/utils" />
     </libraryRoots>
   </component>
 </project>

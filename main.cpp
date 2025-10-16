@@ -1,18 +1,17 @@
 #include <iostream>
-#include "utils/node.h"
-#include "layers/network.h"
+#include <utils/node.h>
+#include <nn_components/network.h>
 
 int main() {
     std::vector<std::pair<std::vector<double>, double>> trainingData = {{{1, 2}, 1}, {{4, 5}, 2}, {{7, 8}, 1}, {{2, 4}, 1}};
 
     Network net = Network({2});
     net.loadTrainingData(trainingData);
+    net.feedInputLayer(3);
     net.forwardPass();
-    std::vector<Neuron> &neurons = net.layers.back().getNeurons();
+    std::vector<Neuron> &neurons = net.layers.back()->getNeurons();
     neurons.back().getActivation()->computePartials();
-
     net.printLayers();
-
 
 
     // Node a = Node(1, false);

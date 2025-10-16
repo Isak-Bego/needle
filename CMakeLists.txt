@@ -10,7 +10,7 @@ add_library(needle_lib INTERFACE
         utils/loss-functions/crossEntropy.h)
 target_include_directories(needle_lib
         INTERFACE
-        ${CMAKE_SOURCE_DIR}         # so you can #include "layers/neuron.h"
+        ${CMAKE_SOURCE_DIR}         # so you can #include "nn_components/neuron.h"
 )
 
 # -------- App --------

@@ -1,35 +1,37 @@
 #ifndef NETWORK_H
 #define NETWORK_H
-#include "layer.h"
-#include "utils/helperFunctions.h"
-#include "utils/loss-functions/crossEntropy.h"
+#include <nn_components/layer.h>
+#include <utils/activation-functions/softmax.h>
+#include <utils/activation-functions/sigmoid.h>
+#include <utils/loss-functions/crossEntropy.h>
 
 //TODO: After you are done inspecting the functionality of Computing Partials for each neuron, make the class instance
 // var private so that they abide the encapsulation principle.
 class Network {
 public:
-  std::vector<Layer> layers;
+  CrossEntropyLayer* errorLayer;
+  std::vector<Layer*> layers;
   std::vector<std::pair<std::vector<double>, double>> trainingData;
 
   void wireLayers () {
     for (std::size_t i = 1; i < layers.size(); i++) {
       // We provide type safety by using at since it throws an error
-      Layer& prev = this->layers.at(i-1);
-      Layer& curr = this->layers.at(i);
-      curr.setPreviousLayer(&prev);
+      Layer* prev = this->layers.at(i-1);
+      Layer* curr = this->layers.at(i);
+      curr->setPreviousLayer(prev);
     }
   }
 
   void initializeWeights() {
     for (std::size_t i = 1; i < layers.size(); i++) {
-      Layer& prev = this->layers.at(i-1);
-      Layer& curr = this->layers.at(i);
+      Layer* prev = this->layers.at(i-1);
+      Layer* curr = this->layers.at(i);
 
       // Since we are creating a dense network every neuron of a layer other than the input layer is connected, to
       // every other neuron that is located in the previous layer.
-      const auto previousLayerNeuronCount = prev.getNeurons().size();
+      const auto previousLayerNeuronCount = prev->getNeurons().size();
 
-      for(Neuron& neuron : curr.getNeurons()) {
+      for(Neuron& neuron : curr->getNeurons()) {
         std::vector<double> weights(previousLayerNeuronCount);
         std::generate(weights.begin(), weights.end(), [&](){return generate_weight(static_cast<int>(previousLayerNeuronCount));});
         neuron.setWeights(weights);
@@ -39,11 +41,11 @@ public:
 
   void feedInputLayer(int inputSetNumber = 0) {
     // Assign the activation of the input layer based on the training inputs
-    std::vector<Neuron>& neurons = this->layers.front().getNeurons();
+    std::vector<Neuron>& neurons = this->layers.front()->getNeurons();
     for (std::size_t i = 0; i < neurons.size(); i++) {
       neurons.at(i).setActivation(this->trainingData.at(inputSetNumber).first[i]);
     }
-    this->layers.back().setExpectedOutput(this->trainingData.at(inputSetNumber).second);
+    this->errorLayer->setExpectedOutput(this->trainingData.at(inputSetNumber).second);
   }
 
   std::vector<double> getDistinctOutputs() {
@@ -75,27 +77,22 @@ public:
 
   explicit Network(const std::vector<int> &hiddenLayerSizes) {
     for (auto layerSize : hiddenLayerSizes) {
-      this->layers.emplace_back(layerSize);
+      this->layers.push_back(new SigmoidLayer(layerSize));
     }
   }
 
   // Loads the training data and prepares the network for training
   void loadTrainingData(const std::vector<std::pair<std::vector<double>, double>> &trainingData) {
-
     this->trainingData = trainingData;
     std::vector<double> distinctOutputs = getDistinctOutputs();
-    std::vector<Neuron> errorLayerNeurons; errorLayerNeurons.reserve(1);
-
     // Create an input layer and place it at the top of the vector
-    this->layers.emplace(this->layers.begin(), static_cast<int>(this->trainingData.front().first.size()));
+    this->layers.insert(this->layers.begin(), new Layer(static_cast<int>(this->trainingData.front().first.size())));
     // This is to create the output layer
-    this->layers.emplace_back(getDistinctOutputs().size(), LayerType::SOFTMAX);
+    this->layers.push_back(new SoftmaxLayer(static_cast<int>(getDistinctOutputs().size())));
     // Create the cross-entropy function that is going to calculate the error of the neural network
-    this->layers.emplace_back(1, LayerType::CROSSENTROPYLOSS, distinctOutputs);
-    auto* error = new CrossEntropy();
-    errorLayerNeurons.emplace_back();
-    errorLayerNeurons.back().setActivationNode(error);
-    this->layers.back().setNeurons(errorLayerNeurons);
+    this->errorLayer = new CrossEntropyLayer(1, distinctOutputs);
+    this->layers.push_back(errorLayer);
+    // Wires the layers and initializes all the weights
     this->wireLayers();
     this->initializeWeights();
     // We feed the input layer with the first set of outputs
@@ -104,13 +101,13 @@ public:
 
   void printLayers() {
     for(auto layer : layers) {
-      layer.print();
+      layer->print();
     }
   }
 
   void forwardPass() {
       for(std::size_t j = 1; j < this->layers.size(); j++) {
-        this->layers.at(j).forwardPass();
+        this->layers.at(j)->forwardPass();
       }
   }
 };
