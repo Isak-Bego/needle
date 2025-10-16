@@ -2,16 +2,32 @@
 #include <utils/node.h>
 #include <nn_components/network.h>
 
+#include "utils/optimizers/sgdOptimizer.h"
+
 int main() {
     const std::vector<std::pair<std::vector<double>, double> > trainingData = {
         {{1, 2}, 1}, {{4, 5}, 2}, {{7, 8}, 1}, {{2, 4}, 1}
     };
 
     auto net = Network({2});
+    const std::vector<Neuron> &neurons = net.getLayers().back()->getNeurons();
     net.loadTrainingData(trainingData);
     net.feedInputLayer(3);
     net.forwardPass();
-    const std::vector<Neuron> &neurons = net.getLayers().back()->getNeurons();
+    neurons.back().getActivation()->computePartials();
+    net.printLayers();
+
+    std::cout <<"After the first SGD"<< std::endl;
+    sgdOptimizer(net);
+    net.forwardPass();
+    net.forwardPass();
+    neurons.back().getActivation()->computePartials();
+    net.printLayers();
+
+    std::cout <<"After the second SGD"<< std::endl;
+    sgdOptimizer(net);
+    net.forwardPass();
+    net.forwardPass();
     neurons.back().getActivation()->computePartials();
     net.printLayers();
 

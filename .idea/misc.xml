@@ -18,6 +18,7 @@
       <file path="$PROJECT_DIR$/nn_components" />
       <file path="$PROJECT_DIR$/utils/activation-functions" />
       <file path="$PROJECT_DIR$/utils/loss-functions" />
+      <file path="$PROJECT_DIR$/utils/optimizers" />
       <file path="$PROJECT_DIR$/utils/random-generators" />
     </sourceRoots>
     <libraryRoots>
