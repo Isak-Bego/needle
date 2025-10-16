@@ -1,6 +1,6 @@
 #ifndef CROSSENTROPY_H
 #define CROSSENTROPY_H
-#include "utils/expressionNode.h"
+#include "utils/node.h"
 #include <cmath>
 
 class CrossEntropy : public Node{

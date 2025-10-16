@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include "utils/activation-functions/sigmoid.h"
-#include "utils/expressionNode.h"
+#include "utils/node.h"
 
 // Helper for near comparisons
 static inline void ExpectNearRel(double a, double b, double rel = 1e-9) {

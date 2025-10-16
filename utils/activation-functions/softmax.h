@@ -1,6 +1,6 @@
 #ifndef SOFTMAX_H
 #define SOFTMAX_H
-#include "utils/expressionNode.h"
+#include "utils/node.h"
 #include "layers/neuron.h"
 #include <cassert>
 #include <cmath>

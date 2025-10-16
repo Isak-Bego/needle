@@ -2,7 +2,7 @@
 #define NEURON_H
 #include <iostream>
 #include "utils/random-generators/randomBiasGenerator.h"
-#include "utils/expressionNode.h"
+#include "utils/node.h"
 
 class Neuron {
     Node* activation = new Node(0.0, false);

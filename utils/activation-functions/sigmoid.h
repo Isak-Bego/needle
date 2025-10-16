@@ -1,7 +1,7 @@
 #ifndef SIGMOID_H
 #define SIGMOID_H
 #include <cmath>
-#include "utils/expressionNode.h"
+#include "utils/node.h"
 
 
 class Sigmoid : public Node {
