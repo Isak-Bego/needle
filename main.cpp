@@ -10,23 +10,24 @@ int main() {
     };
 
     auto net = Network({2});
-    const std::vector<Neuron> &neurons = net.getLayers().back()->getNeurons();
     net.loadTrainingData(trainingData);
     net.feedInputLayer(3);
+    const std::vector<Neuron> &neurons = net.getLayers().back()->getNeurons();
+
     net.forwardPass();
     neurons.back().getActivation()->computePartials();
     net.printLayers();
 
+    sgdOptimizer(net);
+    std::cout<<std::endl;
     std::cout <<"After the first SGD"<< std::endl;
-    sgdOptimizer(net);
-    net.forwardPass();
     net.forwardPass();
     neurons.back().getActivation()->computePartials();
     net.printLayers();
+    std::cout << std::endl;
 
-    std::cout <<"After the second SGD"<< std::endl;
     sgdOptimizer(net);
-    net.forwardPass();
+    std::cout <<"After the second SGD"<< std::endl;
     net.forwardPass();
     neurons.back().getActivation()->computePartials();
     net.printLayers();
