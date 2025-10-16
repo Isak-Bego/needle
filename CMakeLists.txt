@@ -32,6 +32,7 @@ enable_testing()
 
 add_executable(tests
         tests/unit/test_expressionNode.cpp
+        tests/unit/test_sigmoid.cpp
         tests/unit/test_softmax.cpp
 )
 target_link_libraries(tests

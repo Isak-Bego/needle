@@ -83,46 +83,6 @@ TEST(Gradients, LinearComboTimesConstant) {
     ExpectNearRel(c.get_gradient(), 0.0);
 }
 
-// ---------- Sigmoid cases ----------
-
-TEST(Gradients, SigmoidOnSingleVariableNode) {
-    // Start with a single variable node (no children).
-    Node x(0.7, /*isVariable=*/true);
-
-    // Apply sigmoid in-place (your code sets isSigmoidApplied=true and mutates value).
-    // After this, x.value == sigmoid(original_x).
-    const double original_x = 0.7;
-    x.apply_sigmoid();
-
-    // Backprop from x as the "output".
-    x.computePartials();
-
-    // Expected: d(sigmoid(x))/dx = sigmoid(x) * (1 - sigmoid(x))
-    // Your computePartials calls sigmoid_derivative(x.get_value()) AFTER apply,
-    // so derivative should be computed using the ACTIVATED value.
-    const double sx = sigmoid(original_x);
-    const double expected = sigmoid_derivative(sx); // matches your implementation contract
-    ExpectNearRel(x.get_gradient(), expected);
-}
-
-TEST(Gradients, SigmoidAtRootChainsThroughChildren) {
-    // Build z = sigmoid(x + y)
-    Node x(0.25, true);
-    Node y(0.75, true);
-
-    Node* s = x + y;     // s.value = 1.0
-    s->apply_sigmoid();  // z = sigmoid(s)
-
-    s->computePartials();
-
-    // dz/dx = sigmoid'(1.0) * 1, dz/dy = sigmoid'(1.0) * 1
-    const double s_pre = 1.0;
-    const double s_act = sigmoid(s_pre);
-    const double d = sigmoid_derivative(s_act); // derivative expects activated value per your code
-    ExpectNearRel(x.get_gradient(), d);
-    ExpectNearRel(y.get_gradient(), d);
-}
-
 // ---------- Re-entrancy / reset behavior ----------
 
 TEST(Backprop, RecomputeDoesNotAccumulateGradients) {

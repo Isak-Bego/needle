@@ -85,9 +85,11 @@ public:
     void softmaxForwardPass() {
         std::vector<double> neuronActivationValues;
         neuronActivationValues.reserve(this->neurons.size());
-       for (int i = 0; i < static_cast<int>(this->neurons.size()); i++) {
-          neuronActivationValues.push_back(this->neurons.at(i).getActivation()->get_value());
-       }
+
+        for (Neuron& neuron: this->neurons) {
+            neuronActivationValues.push_back(neuron.getActivation()->get_value());
+        }
+
         std::vector<double> softmaxOutputs = Softmax::softmax(neuronActivationValues);
         for (int i = 0; i < static_cast<int>(this->neurons.size()); i++) {
             auto* softmax = new Softmax(this->neurons, softmaxOutputs, i);
