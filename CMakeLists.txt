@@ -5,18 +5,17 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# -------- Header-only library --------
-add_library(needle_lib INTERFACE
-        utils/loss-functions/crossEntropy.h)
+# -------- My Header-only library --------
+add_library(needle_lib INTERFACE)
 target_include_directories(needle_lib
         INTERFACE
-        ${CMAKE_SOURCE_DIR}         # so you can #include "nn_components/neuron.h"
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+
 # -------- App --------
-add_executable(needle
-        main.cpp
-)
+add_executable(needle) # This creates a target according to the CMAKE documentation which you can change the properties of
+target_sources(needle PRIVATE main.cpp)
 target_link_libraries(needle PRIVATE needle_lib)
 
 # -------- GoogleTest --------
@@ -24,8 +23,9 @@ include(FetchContent)
 FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        release-1.12.1
+        GIT_TAG release-1.12.1
 )
+
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
