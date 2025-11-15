@@ -1,7 +1,7 @@
 #ifndef NEURON_H
 #define NEURON_H
 #include <random>
-#include <nn_components/module.h>
+#include <nnComponents/module.h>
 
 class Neuron final : public Module {
     std::vector<Node *> weights;

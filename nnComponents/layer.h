@@ -1,7 +1,7 @@
 #ifndef LAYER_H
 #define LAYER_H
-#include <nn_components/module.h>
-#include <nn_components/neuron.h>
+#include <nnComponents/module.h>
+#include <nnComponents/neuron.h>
 
 class Layer : public Module {
     std::vector<Neuron> neurons;

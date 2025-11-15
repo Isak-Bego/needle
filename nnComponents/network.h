@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
-#include <nn_components/module.h>
-#include <nn_components/layer.h>
+#include <nnComponents/module.h>
+#include <nnComponents/layer.h>
 
 class Network final : public Module {
     std::vector<Layer> layers;
