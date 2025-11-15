@@ -25,7 +25,7 @@ public:
         Node *act = b;
 
         for (size_t i = 0; i < w.size(); ++i) {
-            act = (*act) + ((*w.at(i)) * (*x.at(i)));
+            act = (*act) + *((*w.at(i)) * (*x.at(i)));
         }
 
         return nonlin ? act->relu() : act;
