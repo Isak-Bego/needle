@@ -2,7 +2,7 @@
 #define MODULE_H
 
 #include <vector>
-#include <AutoGradEngine/node.h>
+#include <autoGradEngine/node.h>
 
 class Module {
 public:

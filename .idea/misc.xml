@@ -15,7 +15,9 @@
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
     <sourceRoots>
+      <file path="$PROJECT_DIR$/autoGradEngine" />
       <file path="$PROJECT_DIR$/nnComponents" />
+      <file path="$PROJECT_DIR$/utils" />
       <file path="$PROJECT_DIR$/utils/activation-functions" />
       <file path="$PROJECT_DIR$/utils/loss-functions" />
       <file path="$PROJECT_DIR$/utils/optimizers" />

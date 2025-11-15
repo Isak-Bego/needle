@@ -1,5 +1,5 @@
 #include <iostream>
-#include <utils/node.h>
+#include <autoGradEngine/node.h>
 #include <nnComponents/network.h>
 
 int main() {
