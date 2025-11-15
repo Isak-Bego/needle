@@ -1,79 +1,49 @@
 #ifndef LAYER_H
 #define LAYER_H
+#include <nn_components/module.h>
 #include <nn_components/neuron.h>
-#include <utils/random-generators/randomWeightGenerator.h>
 
-class Layer {
-    Layer *previousLayer = nullptr;
+class Layer : public Module {
     std::vector<Neuron> neurons;
 
 public:
-    Layer() = default;
-
-    explicit Layer(int numberOfNeurons) {
-        this->neurons.reserve(numberOfNeurons);
-
-        for (int n = 0; n < numberOfNeurons; ++n) {
-            this->neurons.emplace_back();
+    Layer(int nin, int nout, bool nonlin = true) {
+        neurons.reserve(nout);
+        for (int i = 0; i < nout; ++i) {
+            neurons.emplace_back(nin, nonlin);
         }
     }
 
-    Layer(int numberOfNeurons, Layer *previousLayer) {
-        this->previousLayer = previousLayer;
-        this->neurons.reserve(numberOfNeurons);
-
-        for (int n = 0; n < numberOfNeurons; ++n) {
-            const int numberOfWeights = static_cast<int>(previousLayer->neurons.size());
-            std::vector<double> weights = generateWeights(numberOfWeights);
-            this->neurons.emplace_back(weights);
+    std::vector<Node*> operator()(const std::vector<Node*>& x) {
+        std::vector<Node*> out;
+        out.reserve(neurons.size());
+        for (auto& n : neurons) {
+            out.push_back(n(x));
         }
+        return out;
     }
 
-    virtual ~Layer() {
-        delete previousLayer;
-    }
-
-    // Getters and setters
-    std::vector<Neuron> &getNeurons() { return this->neurons; }
-    void setNeurons(const std::vector<Neuron> &neurons) { this->neurons = neurons; }
-
-    Layer *getPreviousLayer() const { return this->previousLayer; }
-    void setPreviousLayer(Layer *previousLayer) { this->previousLayer = previousLayer; }
-
-    virtual void print() {
-        std::cout << std::endl << "---------Layer Begin------------" << std::endl << std::endl;
-        for (auto &neuron: this->neurons) {
-            neuron.print();
+    std::vector<Node*> parameters() override {
+        std::vector<Node*> params;
+        for (auto& n : neurons) {
+            auto np = n.parameters();
+            params.insert(params.end(), np.begin(), np.end());
         }
-        std::cout << "-----------Layer End-------------" << std::endl;
+        return params;
     }
 
-    void calculateWeightedSum(std::vector<Neuron> &previousNeurons) {
-        for (Neuron &neuron: this->neurons) {
-            std::vector<Node> &weights = neuron.getWeights();
-            Node *neuronActivation = neuron.getActivation();
-
-            for (std::size_t i = 0; i < previousNeurons.size(); ++i) {
-                Node *product = weights.at(i) * *previousNeurons.at(i).getActivation();
-                neuronActivation = (*neuronActivation) + (*product);
-            }
-
-            neuronActivation = *neuronActivation + neuron.getBias();
-            neuron.setActivationNode(neuronActivation);
+    std::string repr() const {
+        std::string s = "Layer of [";
+        for (size_t i = 0; i < neurons.size(); ++i) {
+            s += neurons.at(i).repr();
+            if (i + 1 < neurons.size()) s += ", ";
         }
-    }
-
-    virtual void forwardPass() {
-    }
-
-    static std::vector<double> generateWeights(const int numberOfWeights) {
-        std::vector<double> weights;
-        weights.reserve(numberOfWeights);
-        for (int w = 0; w < numberOfWeights; ++w) {
-            weights.push_back(static_cast<double>(generate_weight(numberOfWeights)));
-        }
-        return weights;
+        return s + "]";
     }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Layer& l) {
+    return os << l.repr();
+}
 
 #endif //LAYER_H

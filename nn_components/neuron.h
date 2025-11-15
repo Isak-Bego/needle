@@ -1,47 +1,49 @@
 #ifndef NEURON_H
 #define NEURON_H
-#include <iostream>
-#include <utils/random-generators/randomBiasGenerator.h>
-#include <utils/node.h>
+#include <random>
+#include <nn_components/module.h>
 
-class Neuron {
-    Node *activation = new Node(0.0, false);
-    std::vector<Node> weights;
-    Node bias = Node(static_cast<double>(generate_bias()), false);
+class Neuron final : public Module {
+    std::vector<Node *> w; // weights
+    Node *b; // bias
+    bool nonlin;
 
 public:
-    Neuron() = default;
+    explicit Neuron(int nin, bool nonlin = true)
+        : b(nullptr), nonlin(nonlin) {
+        static thread_local std::mt19937 gen{std::random_device{}()};
+        static thread_local std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
-    explicit Neuron(const double act) {
-        this->setActivation(act);
-    }
-
-    explicit Neuron(const std::vector<double> &weights) {
-        this->setWeights(weights);
-    }
-
-    void print() {
-        std::cout << "Activation: " << activation->get_value() << std::endl;
-        std::cout << "Bias: " << bias.get_value() << std::endl;
-        for (auto i = 0; i < weights.size(); i++) {
-            std::cout << "W" << i << " : " << "Value: " << weights.at(i).get_value() << ", Gradient: " << weights.at(i).
-                    get_gradient() << std::endl;
+        w.reserve(nin);
+        for (int i = 0; i < nin; ++i) {
+            w.push_back(new Node(dist(gen)));
         }
-        std::cout << std::endl;
+        b = new Node(0.0);
     }
 
-    std::vector<Node> &getWeights() { return this->weights; }
+    Node *operator()(const std::vector<Node *> &x) {
+        Node *act = b;
 
-    void setWeights(const std::vector<double> &weights) {
-        for (double weight: weights) {
-            this->weights.emplace_back(weight, true);
+        for (size_t i = 0; i < w.size(); ++i) {
+            act = (*act) + ((*w.at(i)) * (*x.at(i)));
         }
+
+        return nonlin ? act->relu() : act;
     }
 
-    Node &getBias() { return this->bias; }
-    void setActivation(const double &activation) const { this->activation->set_value(activation); }
-    Node *getActivation() const { return this->activation; }
-    void setActivationNode(Node *activation) { this->activation = activation; }
+    std::vector<Node *> parameters() override {
+        std::vector<Node *> params = w;
+        params.push_back(b);
+        return params;
+    }
+
+    std::string repr() const {
+        return (nonlin ? "ReLUNeuron(" : "LinearNeuron(") + std::to_string(w.size()) + ")";
+    }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const Neuron &n) {
+    return os << n.repr();
+}
 
 #endif //NEURON_H
