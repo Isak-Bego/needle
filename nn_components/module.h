@@ -12,7 +12,7 @@ public:
         return {};
     }
 
-    void zero_grad() {
+    void clear_gradients() {
         for (Node* p : parameters()) {
             if (p) p->grad = 0.0;
         }

@@ -7,43 +7,43 @@ class Layer : public Module {
     std::vector<Neuron> neurons;
 
 public:
-    Layer(int nin, int nout, bool nonlin = true) {
-        neurons.reserve(nout);
-        for (int i = 0; i < nout; ++i) {
-            neurons.emplace_back(nin, nonlin);
+    Layer(int numberOfInputs, int numberOfOutputs, bool nonLinear = true) {
+        neurons.reserve(numberOfOutputs);
+        for (int i = 0; i < numberOfOutputs; ++i) {
+            neurons.emplace_back(numberOfInputs, nonLinear);
         }
     }
 
     std::vector<Node*> operator()(const std::vector<Node*>& x) {
-        std::vector<Node*> out;
-        out.reserve(neurons.size());
-        for (auto& n : neurons) {
-            out.push_back(n(x));
+        std::vector<Node*> output;
+        output.reserve(neurons.size());
+        for (auto& neuron : neurons) {
+            output.push_back(neuron(x));
         }
-        return out;
+        return output;
     }
 
     std::vector<Node*> parameters() override {
-        std::vector<Node*> params;
-        for (auto& n : neurons) {
-            auto np = n.parameters();
-            params.insert(params.end(), np.begin(), np.end());
+        std::vector<Node*> layerParameters;
+        for (auto& neuron : neurons) {
+            auto neuronParameters = neuron.parameters();
+            layerParameters.insert(layerParameters.end(), neuronParameters.begin(), neuronParameters.end());
         }
-        return params;
+        return layerParameters;
     }
 
-    std::string repr() const {
+    std::string representation() const {
         std::string s = "Layer of [";
         for (size_t i = 0; i < neurons.size(); ++i) {
-            s += neurons.at(i).repr();
+            s += neurons.at(i).representation();
             if (i + 1 < neurons.size()) s += ", ";
         }
         return s + "]";
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Layer& l) {
-    return os << l.repr();
+inline std::ostream& operator<<(std::ostream& os, const Layer& layer) {
+    return os << layer.representation();
 }
 
 #endif //LAYER_H

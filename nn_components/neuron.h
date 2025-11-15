@@ -4,46 +4,46 @@
 #include <nn_components/module.h>
 
 class Neuron final : public Module {
-    std::vector<Node *> w; // weights
-    Node *b; // bias
-    bool nonlin;
+    std::vector<Node *> weights;
+    Node *bias;
+    bool isNonlinear;
 
 public:
-    explicit Neuron(int nin, bool nonlin = true)
-        : b(nullptr), nonlin(nonlin) {
+    explicit Neuron(int numberOfInputs, const bool isNonlinear = true)
+        : bias(nullptr), isNonlinear(isNonlinear) {
         static thread_local std::mt19937 gen{std::random_device{}()};
         static thread_local std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
-        w.reserve(nin);
-        for (int i = 0; i < nin; ++i) {
-            w.push_back(new Node(dist(gen)));
+        weights.reserve(numberOfInputs);
+        for (int i = 0; i < numberOfInputs; ++i) {
+            weights.push_back(new Node(dist(gen)));
         }
-        b = new Node(0.0);
+        bias = new Node(0.0);
     }
 
-    Node *operator()(const std::vector<Node *> &x) {
-        Node *act = b;
+    Node *operator()(const std::vector<Node *> &inputVector) {
+        Node *weightedSum = bias;
 
-        for (size_t i = 0; i < w.size(); ++i) {
-            act = (*act) + *((*w.at(i)) * (*x.at(i)));
+        for (size_t i = 0; i < weights.size(); ++i) {
+            weightedSum = (*weightedSum) + *((*weights.at(i)) * (*inputVector.at(i)));
         }
 
-        return nonlin ? act->relu() : act;
+        return isNonlinear ? weightedSum->relu() : weightedSum;
     }
 
     std::vector<Node *> parameters() override {
-        std::vector<Node *> params = w;
-        params.push_back(b);
+        std::vector<Node *> params = weights;
+        params.push_back(bias);
         return params;
     }
 
-    std::string repr() const {
-        return (nonlin ? "ReLUNeuron(" : "LinearNeuron(") + std::to_string(w.size()) + ")";
+    std::string representation() const {
+        return (isNonlinear ? "ReLUNeuron(" : "LinearNeuron(") + std::to_string(weights.size()) + ")";
     }
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Neuron &n) {
-    return os << n.repr();
+    return os << n.representation();
 }
 
 #endif //NEURON_H
