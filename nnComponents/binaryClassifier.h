@@ -157,14 +157,27 @@ public:
         }
 
         std::cout << std::endl;
-
-        std::cout << "These are the weights: " << std::endl;
-        for (const Node *n: this->parameters()) {
-            std::cout << n->data << std::endl;
-        }
         std::cout << "Training complete!" << std::endl;
     }
+
+    int predict (std::vector<double>& inputs) {
+        std::vector<Node *> input_nodes;
+        input_nodes.reserve(inputs.size());
+
+        for (const double val: inputs) {
+            input_nodes.push_back(new Node(val));
+        }
+
+        Node* n = forward(input_nodes);
+
+        if (n->data >= 0.5) {
+            return 1;
+        }
+
+        return 0;
+    }
 };
+
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClassifier& m) {
     return os << m.representation();
