@@ -7,10 +7,10 @@ class Layer : public Module {
     std::vector<Neuron> neurons;
 
 public:
-    Layer(int numberOfInputs, int numberOfOutputs, bool nonLinear = true) {
+    Layer(int numberOfInputs, int numberOfOutputs, Activation act = Activation::RELU) {
         neurons.reserve(numberOfOutputs);
         for (int i = 0; i < numberOfOutputs; ++i) {
-            neurons.emplace_back(numberOfInputs, nonLinear);
+            neurons.emplace_back(numberOfInputs, act);
         }
     }
 

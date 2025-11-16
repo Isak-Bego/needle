@@ -12,11 +12,11 @@ target_include_directories(needle_lib
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
-# -------- App --------
-add_executable(needle) # This creates a target according to the CMAKE documentation which you can change the properties of
+# -------- Original demo app --------
+add_executable(needle)
 target_sources(needle PRIVATE main.cpp)
 target_link_libraries(needle PRIVATE needle_lib)
+
 
 # -------- GoogleTest --------
 include(FetchContent)
