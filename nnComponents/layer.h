@@ -3,7 +3,7 @@
 #include <nnComponents/module.h>
 #include <nnComponents/neuron.h>
 
-class Layer : public Module {
+class  Layer : public Module {
     std::vector<Neuron> neurons;
 
 public:

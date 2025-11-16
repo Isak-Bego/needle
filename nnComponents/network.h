@@ -2,11 +2,14 @@
 #define NETWORK_H
 #include <nnComponents/module.h>
 #include <nnComponents/layer.h>
+#include <nnComponents/neuron.h>
 
-class Network final : public Module {
+class Network : public Module {
+protected:
     std::vector<Layer> layers;
-
 public:
+    Network(){};
+
     Network(const int numberOfInputs, const std::vector<int> &numberOfOutputs) {
         // The vector below holds the dimensions of each layer of the network
         std::vector<int> networkDimensions;
@@ -15,8 +18,7 @@ public:
         networkDimensions.insert(networkDimensions.end(), numberOfOutputs.begin(), numberOfOutputs.end());
 
         for (size_t i = 0; i < numberOfOutputs.size(); ++i) {
-            bool nonlin = (i != numberOfOutputs.size() - 1);
-            layers.emplace_back(networkDimensions.at(i), networkDimensions.at(i+1), nonlin);
+            layers.emplace_back(networkDimensions.at(i), networkDimensions.at(i + 1), Activation::RELU);
         }
     }
 
@@ -39,7 +41,7 @@ public:
         return params;
     }
 
-    std::string representation() const {
+    virtual std::string representation() const {
         std::string s = "Network of [";
         for (size_t i = 0; i < layers.size(); ++i) {
             s += layers.at(i).representation();
@@ -47,6 +49,8 @@ public:
         }
         return s + "]";
     }
+
+    virtual void train(const double learningRate, const int epochs, const int batchSize, std::vector<std::pair<std::vector<double>, double>> dataset) {}
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Network &m) {

@@ -6,6 +6,23 @@
 #include <cmath>
 
 class BinaryCrossEntropyLoss {
+    // Natural logarithm as a Node operation
+    static Node* log_node(Node* x, double epsilon = 1e-7) {
+        auto self = x;
+        // Clamp input to avoid log(0)
+        double clamped = std::max(self->data, epsilon);
+        double out_data = std::log(clamped);
+        auto out = new Node(out_data, {self}, "log");
+
+        out->_backward = [self, out, epsilon]() {
+            // d(log(x))/dx = 1/x
+            double clamped = std::max(self->data, epsilon);
+            self->grad += (1.0 / clamped) * out->grad;
+        };
+
+        return out;
+    }
+
 public:
     // Binary cross-entropy loss for binary classification
     // L = -[y * log(p) + (1-y) * log(1-p)]
@@ -47,24 +64,6 @@ public:
         // Divide by batch size to get mean
         auto mean_loss = (*total_loss) / static_cast<double>(predictions.size());
         return mean_loss;
-    }
-
-private:
-    // Natural logarithm as a Node operation
-    static Node* log_node(Node* x, double epsilon = 1e-7) {
-        auto self = x;
-        // Clamp input to avoid log(0)
-        double clamped = std::max(self->data, epsilon);
-        double out_data = std::log(clamped);
-        auto out = new Node(out_data, {self}, "log");
-
-        out->_backward = [self, out, epsilon]() {
-            // d(log(x))/dx = 1/x
-            double clamped = std::max(self->data, epsilon);
-            self->grad += (1.0 / clamped) * out->grad;
-        };
-
-        return out;
     }
 };
 
