@@ -3,48 +3,30 @@
 
 #include <nnComponents/network.h>
 #include <nnComponents/layer.h>
-#include <utils/optimizers/SGD.h>
-#include <utils/lossFunctions/binaryCrossEntropy.h>
+#include <nnComponents/optimizers/SGD.h>
+#include <nnComponents/lossFunctions/binaryCrossEntropy.h>
 #include <utils/serialization/modelSerializer.h>
 #include <iostream>
 #include <iomanip>
 
 class BinaryClassifier final : public Network {
-    int numberOfInputs;
-    std::vector<int> hiddenLayerSizes;
-
 public:
     // For binary classification, we use sigmoid on the output layer
-    BinaryClassifier(int numberOfInputs, const std::vector<int> &hiddenLayerSizes)
-        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes)), numberOfInputs(numberOfInputs),
-          hiddenLayerSizes(hiddenLayerSizes) {
+    BinaryClassifier(const int numberOfInputs, const std::vector<int> &hiddenLayerSizes)
+        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes)){
     }
 
     /// Helper function for creating a binary classifier network
     static std::vector<std::pair<int, Activation> > getNetworkSpecs(int numberOfInputs,
                                                                     const std::vector<int> &hiddenLayerSizes) {
         std::vector<std::pair<int, Activation> > networkSpecs;
-        networkSpecs.emplace_back(numberOfInputs, Activation::RELU);
+        networkSpecs.emplace_back(numberOfInputs, Activation::INPUT);
         for (int hiddenLayerSize: hiddenLayerSizes) {
             networkSpecs.emplace_back(hiddenLayerSize, Activation::RELU);
         }
         networkSpecs.emplace_back(1, Activation::SIGMOID);
 
         return networkSpecs;
-    }
-
-    // Get model architecture info
-    ModelMetadata getMetadata() {
-        return ModelMetadata{numberOfInputs, hiddenLayerSizes, parameters().size()};
-    }
-
-    /// Model specific forward-pass method
-    Node *forward(const std::vector<Node *> &inputVector) {
-        std::vector<Node *> x = inputVector;
-        for (auto &layer: this->layers) {
-            x = layer(x);
-        }
-        return x.at(0);
     }
 
     std::string representation() const override {
@@ -56,21 +38,13 @@ public:
         return s + "]";
     }
 
-    // Save model with architecture metadata
-    bool saveModel(const std::string &filepath) {
-        std::vector<Node *> params = this->parameters();
-        ModelMetadata metadata = getMetadata();
-
-        return ModelSerializer::saveWithMetadata(params, metadata, filepath);
-    }
-
     static BinaryClassifier *loadFromFile(const std::string &filepath) {
         try {
             // Load metadata first
             ModelMetadata metadata = ModelSerializer::loadMetadata(filepath);
 
             // Create model with the correct architecture
-            auto *model = new BinaryClassifier(metadata.num_inputs, metadata.hidden_layer_sizes);
+            auto *model = new BinaryClassifier(metadata.numInputs, metadata.hiddenLayerSizes);
 
             // Load the parameters
             std::vector<Node *> params = model->parameters();
@@ -80,14 +54,14 @@ public:
             }
 
             std::cout << "✓ Model loaded successfully!" << std::endl;
-            std::cout << "  - Inputs: " << metadata.num_inputs << std::endl;
+            std::cout << "  - Inputs: " << metadata.numInputs << std::endl;
             std::cout << "  - Hidden layers: [";
-            for (size_t i = 0; i < metadata.hidden_layer_sizes.size(); ++i) {
-                std::cout << metadata.hidden_layer_sizes.at(i);
-                if (i + 1 < metadata.hidden_layer_sizes.size()) std::cout << ", ";
+            for (size_t i = 0; i < metadata.hiddenLayerSizes.size(); ++i) {
+                std::cout << metadata.hiddenLayerSizes.at(i);
+                if (i + 1 < metadata.hiddenLayerSizes.size()) std::cout << ", ";
             }
             std::cout << "]" << std::endl;
-            std::cout << "  - Total parameters: " << metadata.total_parameters << std::endl;
+            std::cout << "  - Total parameters: " << metadata.totalParameters << std::endl;
 
             return model;
         } catch (const std::exception &e) {
@@ -123,7 +97,7 @@ public:
                     input_nodes.push_back(new Node(val));
                 }
 
-                Node *prediction = this->forward(input_nodes);
+                Node *prediction = (*this)(input_nodes).at(0);
                 Node *loss = BinaryCrossEntropyLoss::compute(prediction, target);
                 total_loss += loss->data;
 
@@ -173,7 +147,7 @@ public:
                 input_nodes.push_back(new Node(val));
             }
 
-            const Node *prediction = this->forward(input_nodes);
+            const Node *prediction = (*this)(input_nodes).at(0);
             double pred_value = prediction->data;
             int pred_class = (pred_value >= 0.5) ? 1 : 0;
 
@@ -193,15 +167,15 @@ public:
         std::cout << "Training complete!" << std::endl;
     }
 
-    int predict(std::vector<double> &inputs) {
+    int predict(std::vector<double> &input) override{
         std::vector<Node *> input_nodes;
-        input_nodes.reserve(inputs.size());
+        input_nodes.reserve(input.size());
 
-        for (const double val: inputs) {
+        for (const double val: input) {
             input_nodes.push_back(new Node(val));
         }
 
-        Node *n = forward(input_nodes);
+        Node *n = (*this)(input_nodes).at(0);
 
         return (n->data >= 0.5) ? 1 : 0;
     }

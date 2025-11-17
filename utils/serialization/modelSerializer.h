@@ -8,14 +8,14 @@
 #include <autoGradEngine/node.h>
 
 struct ModelMetadata {
-    int num_inputs;
-    std::vector<int> hidden_layer_sizes;
-    size_t total_parameters;
+    int numInputs;
+    std::vector<int> hiddenLayerSizes;
+    size_t totalParameters;
 
-    ModelMetadata() : num_inputs(0), total_parameters(0) {}
+    ModelMetadata() : numInputs(0), totalParameters(0) {}
 
-    ModelMetadata(int inputs, const std::vector<int>& hidden_sizes, size_t num_params)
-        : num_inputs(inputs), hidden_layer_sizes(hidden_sizes), total_parameters(num_params) {}
+    ModelMetadata(const int inputs, const std::vector<int>& hiddenSizes, const size_t numParams)
+        : numInputs(inputs), hiddenLayerSizes(hiddenSizes), totalParameters(numParams) {}
 };
 
 class ModelSerializer {
@@ -30,16 +30,16 @@ public:
         }
 
         // Write metadata
-        file.write(reinterpret_cast<const char*>(&metadata.num_inputs), sizeof(metadata.num_inputs));
+        file.write(reinterpret_cast<const char*>(&metadata.numInputs), sizeof(metadata.numInputs));
 
-        size_t hidden_size = metadata.hidden_layer_sizes.size();
+        size_t hidden_size = metadata.hiddenLayerSizes.size();
         file.write(reinterpret_cast<const char*>(&hidden_size), sizeof(hidden_size));
 
-        for (int layer_size : metadata.hidden_layer_sizes) {
+        for (int layer_size : metadata.hiddenLayerSizes) {
             file.write(reinterpret_cast<const char*>(&layer_size), sizeof(layer_size));
         }
 
-        file.write(reinterpret_cast<const char*>(&metadata.total_parameters), sizeof(metadata.total_parameters));
+        file.write(reinterpret_cast<const char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         // Write parameters
         size_t num_params = parameters.size();
@@ -65,18 +65,18 @@ public:
         ModelMetadata metadata;
 
         // Read metadata
-        file.read(reinterpret_cast<char*>(&metadata.num_inputs), sizeof(metadata.num_inputs));
+        file.read(reinterpret_cast<char*>(&metadata.numInputs), sizeof(metadata.numInputs));
 
         size_t hidden_size = 0;
         file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));
 
-        metadata.hidden_layer_sizes.resize(hidden_size);
+        metadata.hiddenLayerSizes.resize(hidden_size);
         for (size_t i = 0; i < hidden_size; ++i) {
-            file.read(reinterpret_cast<char*>(&metadata.hidden_layer_sizes.at(i)),
-                     sizeof(metadata.hidden_layer_sizes.at(i)));
+            file.read(reinterpret_cast<char*>(&metadata.hiddenLayerSizes.at(i)),
+                     sizeof(metadata.hiddenLayerSizes.at(i)));
         }
 
-        file.read(reinterpret_cast<char*>(&metadata.total_parameters), sizeof(metadata.total_parameters));
+        file.read(reinterpret_cast<char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         file.close();
         return metadata;
@@ -92,7 +92,7 @@ public:
 
         // Skip metadata section
         ModelMetadata metadata;
-        file.read(reinterpret_cast<char*>(&metadata.num_inputs), sizeof(metadata.num_inputs));
+        file.read(reinterpret_cast<char*>(&metadata.numInputs), sizeof(metadata.numInputs));
 
         size_t hidden_size = 0;
         file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));
@@ -102,7 +102,7 @@ public:
             file.read(reinterpret_cast<char*>(&dummy), sizeof(dummy));
         }
 
-        file.read(reinterpret_cast<char*>(&metadata.total_parameters), sizeof(metadata.total_parameters));
+        file.read(reinterpret_cast<char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         // Read parameters
         size_t num_params = 0;
