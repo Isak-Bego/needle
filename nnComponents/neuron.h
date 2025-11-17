@@ -3,6 +3,8 @@
 #include <random>
 #include <nnComponents/module.h>
 #include <nnComponents/activations/simoidNode.h>
+
+#include "activations/relu.h"
 #include "utils/randomGenerators/randomBiasGenerator.h"
 #include "utils/randomGenerators/randomWeightGenerator.h"
 
@@ -19,7 +21,7 @@ class Neuron final : public Module {
     Activation activation;
 
 public:
-    explicit Neuron(int numberOfInputs, Activation act = Activation::RELU)
+    explicit Neuron(int numberOfInputs, const Activation act = Activation::RELU)
         : bias(new Node(generate_bias())), activation(act) {
 
         weights.reserve(numberOfInputs);
@@ -38,11 +40,9 @@ public:
 
         switch (activation) {
             case Activation::RELU:
-                return weightedSum->relu();
+                return relu(weightedSum);
             case Activation::SIGMOID:
                 return sigmoid(weightedSum);
-            case Activation::LINEAR:
-                return weightedSum;
             default:
                 return weightedSum;
         }
@@ -60,6 +60,7 @@ public:
             case Activation::RELU: act_str = "ReLU"; break;
             case Activation::SIGMOID: act_str = "Sigmoid"; break;
             case Activation::LINEAR: act_str = "Linear"; break;
+            case Activation::INPUT: act_str = "Input"; break;
         }
         return act_str + "Neuron(" + std::to_string(weights.size()) + ")";
     }
