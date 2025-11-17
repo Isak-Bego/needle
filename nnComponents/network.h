@@ -73,7 +73,7 @@ public:
         return s + "]";
     }
 
-    virtual void train(const double learningRate, const int epochs, const int batchSize, std::vector<std::pair<std::vector<double>, double>> dataset) {}
+    virtual void train(const double learningRate, const int epochs, const int batchSize, std::vector<std::pair<std::vector<double>, double>>& dataset) {}
 };
 
 /// The overloading function of the operator << that calls the representation() method of the network for convenience

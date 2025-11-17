@@ -1,5 +1,5 @@
 #include <vector>
-#include <nnComponents/binaryClassifier.h>
+#include <models/binaryClassifier.h>
 #include <utils/datasets/xorDataset.h>
 
 int main() {

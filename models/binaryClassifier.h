@@ -99,7 +99,7 @@ public:
     }
 
     void train(const double learningRate, const int epochs, const int batchSize,
-               std::vector<std::pair<std::vector<double>, double>> dataset) override {
+               std::vector<std::pair<std::vector<double>, double>>& dataset) override {
         const auto self = this;
         const SGD optimizer(learningRate);
         const int print_every = epochs / 10;
