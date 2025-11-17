@@ -8,7 +8,7 @@ int main() {
     auto dataset = XORDataset::get_data();
     BinaryClassifier model(2, {8, 8});
 
-    model.train(0.2, 1000, 4, dataset);
+    model.train(0.2, 1000, 1, dataset);
 
     // Save the trained model with metadata
     if (model.save_model("xor_model.bin")) {
