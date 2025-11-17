@@ -11,7 +11,7 @@ int main() {
     model.train(0.2, 1000, 1, dataset);
 
     // Save the trained model with metadata
-    if (model.save_model("xor_model.bin")) {
+    if (model.saveModel("xor_model.bin")) {
         std::cout << "\n✓ Model saved successfully to 'xor_model.bin'" << std::endl;
     } else {
         std::cerr << "\n✗ Failed to save model" << std::endl;
@@ -23,7 +23,7 @@ int main() {
     std::cout << "=== Loading Model from File ===" << std::endl;
 
     // The architecture is automatically reconstructed from the file
-    BinaryClassifier* loaded_model = BinaryClassifier::load_from_file("xor_model.bin");
+    BinaryClassifier* loaded_model = BinaryClassifier::loadFromFile("xor_model.bin");
 
     if (loaded_model != nullptr) {
         std::cout << "\n=== Testing Loaded Model ===" << std::endl;

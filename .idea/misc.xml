@@ -16,6 +16,7 @@
   <component name="CidrRootsConfiguration">
     <sourceRoots>
       <file path="$PROJECT_DIR$/autoGradEngine" />
+      <file path="$PROJECT_DIR$/models" />
       <file path="$PROJECT_DIR$/nnComponents" />
       <file path="$PROJECT_DIR$/utils" />
       <file path="$PROJECT_DIR$/utils/activation-functions" />

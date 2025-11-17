@@ -3,6 +3,8 @@
 #include <random>
 #include <nnComponents/module.h>
 #include <utils/activations/simoidNode.h>
+#include "utils/randomGenerators/randomBiasGenerator.h"
+#include "utils/randomGenerators/randomWeightGenerator.h"
 
 enum class Activation {
     RELU,
@@ -17,13 +19,11 @@ class Neuron final : public Module {
 
 public:
     explicit Neuron(int numberOfInputs, Activation act = Activation::RELU)
-        : bias(nullptr), activation(act) {
-        static thread_local std::mt19937 gen{std::random_device{}()};
-        static thread_local std::uniform_real_distribution<double> dist(-1.0, 1.0);
+        : bias(new Node(generate_bias())), activation(act) {
 
         weights.reserve(numberOfInputs);
         for (int i = 0; i < numberOfInputs; ++i) {
-            weights.push_back(new Node(dist(gen)));
+            weights.push_back(new Node(generate_weight(numberOfInputs)));
         }
         bias = new Node(0.0);
     }

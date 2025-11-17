@@ -21,7 +21,7 @@ struct ModelMetadata {
 class ModelSerializer {
 public:
     // Save model with metadata
-    static bool save_with_metadata(const std::vector<Node*>& parameters,
+    static bool saveWithMetadata(const std::vector<Node*>& parameters,
                                    const ModelMetadata& metadata,
                                    const std::string& filepath) {
         std::ofstream file(filepath, std::ios::binary);
@@ -56,7 +56,7 @@ public:
     }
 
     // Load model metadata without loading parameters
-    static ModelMetadata load_metadata(const std::string& filepath) {
+    static ModelMetadata loadMetadata(const std::string& filepath) {
         std::ifstream file(filepath, std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error("Failed to open file: " + filepath);
@@ -83,7 +83,7 @@ public:
     }
 
     // Load parameters with validation
-    static bool load_with_validation(std::vector<Node*>& parameters,
+    static bool loadWithValidation(std::vector<Node*>& parameters,
                                     const std::string& filepath) {
         std::ifstream file(filepath, std::ios::binary);
         if (!file.is_open()) {

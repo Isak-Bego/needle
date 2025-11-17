@@ -7,24 +7,18 @@
 class Network : public Module {
 protected:
     std::vector<Layer> layers;
+
 public:
     Network() = default;
 
     /**
      * @brief Creates the default network with ReLU activation function
      *
-     * @param numberOfInputs - Marks the dimension of the input flattened into a one-dimensional vector
-     * @param hiddenLayerSizes - A vector containing the size of the hidden layers of the network
+     * @param networkSpecs - holds information about the size and type of each layer
      */
-    Network(const int numberOfInputs, const std::vector<int> &hiddenLayerSizes) {
-        // The vector below holds the dimensions of each layer of the network
-        std::vector<int> networkDimensions;
-        networkDimensions.reserve(hiddenLayerSizes.size() + 1); // to account for the input layer size
-        networkDimensions.push_back(numberOfInputs);
-        networkDimensions.insert(networkDimensions.end(), hiddenLayerSizes.begin(), hiddenLayerSizes.end());
-
-        for (size_t i = 0; i < hiddenLayerSizes.size(); ++i) {
-            layers.emplace_back(networkDimensions.at(i), networkDimensions.at(i + 1), Activation::RELU);
+    explicit Network(const std::vector<std::pair<int, Activation> > &networkSpecs) {
+        for (size_t i = 0; i < networkSpecs.size() - 1; i++) {
+            layers.emplace_back(networkSpecs.at(i).first, networkSpecs.at(i + 1).first, networkSpecs.at(i + 1).second);
         }
     }
 
@@ -73,7 +67,9 @@ public:
         return s + "]";
     }
 
-    virtual void train(const double learningRate, const int epochs, const int batchSize, std::vector<std::pair<std::vector<double>, double>>& dataset) {}
+    virtual void train(const double learningRate, const int epochs, const int batchSize,
+                       std::vector<std::pair<std::vector<double>, double> > &dataset) {
+    }
 };
 
 /// The overloading function of the operator << that calls the representation() method of the network for convenience

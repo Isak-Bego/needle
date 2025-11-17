@@ -10,44 +10,44 @@
 #include <iomanip>
 
 class BinaryClassifier final : public Network {
-    int num_inputs;
-    std::vector<int> hidden_layer_sizes;
+    int numberOfInputs;
+    std::vector<int> hiddenLayerSizes;
 
 public:
     // For binary classification, we use sigmoid on the output layer
-    BinaryClassifier(int numberOfInputs, const std::vector<int>& hiddenLayerSizes)
-        : num_inputs(numberOfInputs), hidden_layer_sizes(hiddenLayerSizes) {
+    BinaryClassifier(int numberOfInputs, const std::vector<int> &hiddenLayerSizes)
+        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes)), numberOfInputs(numberOfInputs),
+          hiddenLayerSizes(hiddenLayerSizes) {
+    }
 
-        std::vector<int> networkDimensions;
-        networkDimensions.reserve(hiddenLayerSizes.size() + 2);
-        networkDimensions.push_back(numberOfInputs);
-        networkDimensions.insert(networkDimensions.end(), hiddenLayerSizes.begin(), hiddenLayerSizes.end());
-        networkDimensions.push_back(1);  // Output layer has 1 neuron for binary classification
-
-        // Build hidden layers with ReLU
-        for (size_t i = 0; i < hiddenLayerSizes.size(); ++i) {
-           this->layers.emplace_back(networkDimensions.at(i), networkDimensions.at(i+1), Activation::RELU);
+    /// Helper function for creating a binary classifier network
+    static std::vector<std::pair<int, Activation> > getNetworkSpecs(int numberOfInputs,
+                                                                    const std::vector<int> &hiddenLayerSizes) {
+        std::vector<std::pair<int, Activation> > networkSpecs;
+        networkSpecs.emplace_back(numberOfInputs, Activation::RELU);
+        for (int hiddenLayerSize: hiddenLayerSizes) {
+            networkSpecs.emplace_back(hiddenLayerSize, Activation::RELU);
         }
+        networkSpecs.emplace_back(1, Activation::SIGMOID);
 
-        // Output layer with sigmoid activation
-        this->layers.emplace_back(networkDimensions[hiddenLayerSizes.size()], 1, Activation::SIGMOID);
+        return networkSpecs;
     }
 
     // Get model architecture info
-    ModelMetadata get_metadata() {
-        return ModelMetadata{num_inputs, hidden_layer_sizes, parameters().size()};
+    ModelMetadata getMetadata() {
+        return ModelMetadata{numberOfInputs, hiddenLayerSizes, parameters().size()};
     }
 
-    // Forward pass - returns a single output node (probability)
-    Node* forward(const std::vector<Node*>& inputVector) {
-        std::vector<Node*> x = inputVector;
-        for (auto& layer : this->layers) {
+    /// Model specific forward-pass method
+    Node *forward(const std::vector<Node *> &inputVector) {
+        std::vector<Node *> x = inputVector;
+        for (auto &layer: this->layers) {
             x = layer(x);
         }
         return x.at(0);
     }
 
-    std::string representation() const override{
+    std::string representation() const override {
         std::string s = "BinaryClassifier of [";
         for (size_t i = 0; i < layers.size(); ++i) {
             s += layers.at(i).representation();
@@ -57,25 +57,24 @@ public:
     }
 
     // Save model with architecture metadata
-    bool save_model(const std::string& filepath) {
-        std::vector<Node*> params = this->parameters();
-        ModelMetadata metadata = get_metadata();
+    bool saveModel(const std::string &filepath) {
+        std::vector<Node *> params = this->parameters();
+        ModelMetadata metadata = getMetadata();
 
-        return ModelSerializer::save_with_metadata(params, metadata, filepath);
-
+        return ModelSerializer::saveWithMetadata(params, metadata, filepath);
     }
 
-    static BinaryClassifier* load_from_file(const std::string& filepath) {
+    static BinaryClassifier *loadFromFile(const std::string &filepath) {
         try {
             // Load metadata first
-            ModelMetadata metadata = ModelSerializer::load_metadata(filepath);
+            ModelMetadata metadata = ModelSerializer::loadMetadata(filepath);
 
             // Create model with the correct architecture
-            auto* model = new BinaryClassifier(metadata.num_inputs, metadata.hidden_layer_sizes);
+            auto *model = new BinaryClassifier(metadata.num_inputs, metadata.hidden_layer_sizes);
 
             // Load the parameters
-            std::vector<Node*> params = model->parameters();
-            if (!ModelSerializer::load_with_validation(params, filepath)) {
+            std::vector<Node *> params = model->parameters();
+            if (!ModelSerializer::loadWithValidation(params, filepath)) {
                 delete model;
                 return nullptr;
             }
@@ -91,15 +90,14 @@ public:
             std::cout << "  - Total parameters: " << metadata.total_parameters << std::endl;
 
             return model;
-
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cerr << "Error loading model: " << e.what() << std::endl;
             return nullptr;
         }
     }
 
     void train(const double learningRate, const int epochs, const int batchSize,
-               std::vector<std::pair<std::vector<double>, double>>& dataset) override {
+               std::vector<std::pair<std::vector<double>, double> > &dataset) override {
         const auto self = this;
         const SGD optimizer(learningRate);
         const int print_every = epochs / 10;
@@ -195,7 +193,7 @@ public:
         std::cout << "Training complete!" << std::endl;
     }
 
-    int predict(std::vector<double>& inputs) {
+    int predict(std::vector<double> &inputs) {
         std::vector<Node *> input_nodes;
         input_nodes.reserve(inputs.size());
 
@@ -203,13 +201,13 @@ public:
             input_nodes.push_back(new Node(val));
         }
 
-        Node* n = forward(input_nodes);
+        Node *n = forward(input_nodes);
 
         return (n->data >= 0.5) ? 1 : 0;
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const BinaryClassifier& m) {
+inline std::ostream &operator<<(std::ostream &os, const BinaryClassifier &m) {
     return os << m.representation();
 }
 

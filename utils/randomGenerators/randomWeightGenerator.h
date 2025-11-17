@@ -12,14 +12,14 @@
 #include <random>
 #include <cmath>
 
-inline double generate_weight(int numberOfWeights) {
+inline double generate_weight(int numberOfInputs) {
     // Step 1: Create a random number generator (engine)
     std::random_device rd; // non-deterministic seed
     std::mt19937 gen(rd()); // Mersenne Twister engine
 
     // Step 2: Define a normal (Gaussian) distribution
     double mean = 0.0; // μ
-    double stddev = 1.0 / sqrt(numberOfWeights); // σ
+    double stddev = 1.0 / sqrt(numberOfInputs); // σ
     std::normal_distribution<double> dist(mean, stddev);
 
     return dist(gen);
