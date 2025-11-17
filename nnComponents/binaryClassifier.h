@@ -5,13 +5,19 @@
 #include <nnComponents/layer.h>
 #include <utils/optimizers/SGD.h>
 #include <utils/lossFunctions/binaryCrossEntropy.h>
+#include <utils/serialization/modelSerializer.h>
 #include <iostream>
 #include <iomanip>
 
 class BinaryClassifier final : public Network {
+    int num_inputs;
+    std::vector<int> hidden_layer_sizes;
+
 public:
     // For binary classification, we use sigmoid on the output layer
-    BinaryClassifier(int numberOfInputs, const std::vector<int>& hiddenLayerSizes) {
+    BinaryClassifier(int numberOfInputs, const std::vector<int>& hiddenLayerSizes)
+        : num_inputs(numberOfInputs), hidden_layer_sizes(hiddenLayerSizes) {
+
         std::vector<int> networkDimensions;
         networkDimensions.reserve(hiddenLayerSizes.size() + 2);
         networkDimensions.push_back(numberOfInputs);
@@ -27,15 +33,18 @@ public:
         this->layers.emplace_back(networkDimensions[hiddenLayerSizes.size()], 1, Activation::SIGMOID);
     }
 
+    // Get model architecture info
+    ModelMetadata get_metadata() {
+        return ModelMetadata{num_inputs, hidden_layer_sizes, parameters().size()};
+    }
+
     // Forward pass - returns a single output node (probability)
     Node* forward(const std::vector<Node*>& inputVector) {
         std::vector<Node*> x = inputVector;
-        // This is nice because it goes in line with the idea that the output vector of one layer, serves
-        // as the input vector for the next layer
         for (auto& layer : this->layers) {
             x = layer(x);
         }
-        return x.at(0);  // Return single output for binary classification
+        return x.at(0);
     }
 
     std::string representation() const override{
@@ -47,9 +56,51 @@ public:
         return s + "]";
     }
 
-    void train(const double learningRate, const int epochs, const int batchSize, std::vector<std::pair<std::vector<double>, double>> dataset) override {
+    // Save model with architecture metadata
+    bool save_model(const std::string& filepath) {
+        std::vector<Node*> params = this->parameters();
+        ModelMetadata metadata = get_metadata();
+
+        return ModelSerializer::save_with_metadata(params, metadata, filepath);
+
+    }
+
+    static BinaryClassifier* load_from_file(const std::string& filepath) {
+        try {
+            // Load metadata first
+            ModelMetadata metadata = ModelSerializer::load_metadata(filepath);
+
+            // Create model with the correct architecture
+            auto* model = new BinaryClassifier(metadata.num_inputs, metadata.hidden_layer_sizes);
+
+            // Load the parameters
+            std::vector<Node*> params = model->parameters();
+            if (!ModelSerializer::load_with_validation(params, filepath)) {
+                delete model;
+                return nullptr;
+            }
+
+            std::cout << "✓ Model loaded successfully!" << std::endl;
+            std::cout << "  - Inputs: " << metadata.num_inputs << std::endl;
+            std::cout << "  - Hidden layers: [";
+            for (size_t i = 0; i < metadata.hidden_layer_sizes.size(); ++i) {
+                std::cout << metadata.hidden_layer_sizes.at(i);
+                if (i + 1 < metadata.hidden_layer_sizes.size()) std::cout << ", ";
+            }
+            std::cout << "]" << std::endl;
+            std::cout << "  - Total parameters: " << metadata.total_parameters << std::endl;
+
+            return model;
+
+        } catch (const std::exception& e) {
+            std::cerr << "Error loading model: " << e.what() << std::endl;
+            return nullptr;
+        }
+    }
+
+    void train(const double learningRate, const int epochs, const int batchSize,
+               std::vector<std::pair<std::vector<double>, double>> dataset) override {
         const auto self = this;
-        // Create optimizer
         const SGD optimizer(learningRate);
         const int print_every = epochs / 10;
 
@@ -61,53 +112,41 @@ public:
             double total_loss = 0.0;
             int ctr = 0;
 
-            // The vector below will be used for accumulating the param gradients
             std::vector<double> accumulatedBatchParamGradients;
             accumulatedBatchParamGradients.assign(self->parameters().size(), 0.0);
 
-
-            // Train on each sample
             while (ctr < dataset.size()) {
                 const auto &inputs = dataset.at(ctr).first;
                 const double target = dataset.at(ctr).second;
 
-                // Convert inputs to Nodes
                 std::vector<Node *> input_nodes;
                 input_nodes.reserve(inputs.size());
                 for (const double val: inputs) {
                     input_nodes.push_back(new Node(val));
                 }
 
-                // Forward pass
                 Node *prediction = this->forward(input_nodes);
-                // Compute loss
                 Node *loss = BinaryCrossEntropyLoss::compute(prediction, target);
                 total_loss += loss->data;
 
-                // Backward pass
                 this->clear_gradients();
                 loss->backward();
 
-                // Add the values of the current parameter gradients to the vector with accumulated gradient
                 for (size_t i = 0; i < this->parameters().size(); i++) {
                     accumulatedBatchParamGradients.at(i) += this->parameters().at(i)->grad;
                 }
 
                 if ((ctr + 1) % batchSize == 0 || ctr == dataset.size() - 1) {
-                    // Update weights
                     std::vector<Node *> modelParams = this->parameters();
-                    // Take the means the gradients of the parameters
                     for (size_t i = 0; i < this->parameters().size(); i++) {
                         double divisor = (ctr + 1) % batchSize != 0 ? (ctr + 1) % batchSize : batchSize;
                         accumulatedBatchParamGradients.at(i) /= divisor;
                         modelParams.at(i)->grad = accumulatedBatchParamGradients.at(i);
                     }
-                    // Do Stochastic Gradient Descent
                     optimizer.step(modelParams);
                     accumulatedBatchParamGradients.assign(this->parameters().size(), 0.0);
                 }
 
-                // Clean up input nodes (they're not part of the model)
                 for (const Node *n: input_nodes) {
                     delete n;
                 }
@@ -117,7 +156,6 @@ public:
 
             ctr = 0;
 
-            // Print progress
             if ((epoch + 1) % print_every == 0) {
                 double avg_loss = total_loss / static_cast<double>(dataset.size());
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
@@ -131,14 +169,12 @@ public:
             const auto &inputs = sample.first;
             const double target = sample.second;
 
-            // Convert inputs to Nodes
             std::vector<Node *> input_nodes;
             input_nodes.reserve(inputs.size());
             for (double val: inputs) {
                 input_nodes.push_back(new Node(val));
             }
 
-            // Forward pass
             const Node *prediction = this->forward(input_nodes);
             double pred_value = prediction->data;
             int pred_class = (pred_value >= 0.5) ? 1 : 0;
@@ -150,7 +186,6 @@ public:
                     << " | " << (pred_class == static_cast<int>(target) ? "✓ CORRECT" : "✗ WRONG")
                     << std::endl;
 
-            // Clean up
             for (const Node *n: input_nodes) {
                 delete n;
             }
@@ -160,7 +195,7 @@ public:
         std::cout << "Training complete!" << std::endl;
     }
 
-    int predict (std::vector<double>& inputs) {
+    int predict(std::vector<double>& inputs) {
         std::vector<Node *> input_nodes;
         input_nodes.reserve(inputs.size());
 
@@ -170,18 +205,12 @@ public:
 
         Node* n = forward(input_nodes);
 
-        if (n->data >= 0.5) {
-            return 1;
-        }
-
-        return 0;
+        return (n->data >= 0.5) ? 1 : 0;
     }
 };
-
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClassifier& m) {
     return os << m.representation();
 }
-
 
 #endif //BINARYCLASSIFIER_H
