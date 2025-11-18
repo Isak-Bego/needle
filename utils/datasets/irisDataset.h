@@ -2,18 +2,14 @@
 #define IRISDATASET_H
 
 #include <vector>
-#include <utility>
+#include <algorithm>  // std::shuffle
+#include <random>     // std::mt19937, std::random_device
 
 class IrisDataset {
 public:
     // Simplified Iris dataset with 4 features and 3 classes
     // Features: [sepal_length, sepal_width, petal_length, petal_width]
     // Classes: 0 = Setosa, 1 = Versicolor, 2 = Virginica
-
-    #include <vector>
-#include <utility>
-#include <algorithm>  // std::shuffle
-#include <random>     // std::mt19937, std::random_device
 
 static std::vector<std::pair<std::vector<double>, double>> get_data() {
     std::vector<std::pair<std::vector<double>, double>> data;
