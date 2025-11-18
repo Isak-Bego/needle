@@ -5,6 +5,7 @@
 #include <nnComponents/activations/simoidNode.h>
 
 #include "activations/relu.h"
+#include "activations/softmax.h"
 #include "utils/randomGenerators/randomBiasGenerator.h"
 #include "utils/randomGenerators/randomWeightGenerator.h"
 
@@ -12,7 +13,8 @@ enum class Activation {
     INPUT,
     RELU,
     SIGMOID,
-    LINEAR
+    LINEAR,
+    SOFTMAX
 };
 
 class Neuron final : public Module {
