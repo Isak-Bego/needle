@@ -104,7 +104,6 @@ public:
 
         for (int epoch = 0; epoch < epochs; ++epoch) {
             double total_loss = 0.0;
-            int correct_predictions = 0;
             int ctr = 0;
 
             std::vector<double> accumulatedBatchParamGradients;
@@ -126,29 +125,9 @@ public:
                 // Apply softmax to get probabilities
                 std::vector<Node*> probabilities = softmax(logits);
 
-                //TODO: Don't forget to delete the code below
-                // std::cout<<"Begin";
-                // for(int i = 0; i < probabilities.size(); i++) {
-                //     std::cout<<probabilities.at(i)->data<<std::endl;
-                // }
-                // std::cout<<"End";
-
                 // Compute loss
                 Node* loss = CategoricalCrossEntropyLoss::compute(probabilities, target_class);
                 total_loss += loss->data;
-
-                // Get prediction for accuracy tracking
-                int predicted_class = 0;
-                double max_prob = probabilities.at(0)->data;
-                for (size_t i = 1; i < probabilities.size(); ++i) {
-                    if (probabilities.at(i)->data > max_prob) {
-                        max_prob = probabilities.at(i)->data;
-                        predicted_class = static_cast<int>(i);
-                    }
-                }
-                if (predicted_class == target_class) {
-                    correct_predictions++;
-                }
 
                 this->clear_gradients();
                 loss->backward();
@@ -164,8 +143,7 @@ public:
                         accumulatedBatchParamGradients.at(i) /= divisor;
                         modelParams.at(i)->grad = accumulatedBatchParamGradients.at(i);
                     }
-                    //TODO: Don't forget to delete the code below
-                    // std::cout<<"Optmizing the parameters..."<<std::endl;
+
                     optimizer.step(modelParams);
                     accumulatedBatchParamGradients.assign(this->parameters().size(), 0.0);
                 }
@@ -181,10 +159,8 @@ public:
 
             if ((epoch + 1) % print_every == 0) {
                 double avg_loss = total_loss / static_cast<double>(dataset.size());
-                double accuracy = static_cast<double>(correct_predictions) / static_cast<double>(dataset.size()) * 100.0;
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
                         << " | Loss: " << std::fixed << std::setprecision(6) << avg_loss
-                        << " | Accuracy: " << std::setprecision(2) << accuracy << "%"
                         << std::endl;
             }
         }

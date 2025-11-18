@@ -36,23 +36,28 @@ inline std::vector<Node*> softmax(const std::vector<Node*>& logits) {
     
     for (size_t i = 0; i < exp_values.size(); ++i) {
         double prob = exp_values.at(i)->data / sum_exp;
-        auto prob_node = new Node(prob, {logits.at(i)}, "softmax");
-        
+
+        // Each probability depends on all logits, not just logits[i]. We therefore
+        // record every logit as a parent so that the autograd engine includes all of
+        // them in the computation graph and executes their backward functions.
+        auto prob_node = new Node(prob, logits, "softmax");
+
         // Set up backward pass
         // Softmax gradient: prob * (1 - prob) for diagonal, -prob_i * prob_j for off-diagonal
-        prob_node->_backward = [logits, probabilities, i, sum_exp, exp_values, prob_node]() {
-            double prob_i = prob_node->data;
-            
+        prob_node->_backward = [logits, i, sum_exp, exp_values, prob_node]() {
+            const double prob_i = prob_node->data;
+
             // Gradient contribution from this output
             for (size_t j = 0; j < logits.size(); ++j) {
+                const double prob_j = exp_values.at(j)->data / sum_exp;
                 if (i == j) {
                     logits.at(j)->grad += prob_i * (1.0 - prob_i) * prob_node->grad;
                 } else {
-                    logits.at(j)->grad += -prob_i * (exp_values.at(j)->data / sum_exp) * prob_node->grad;
+                    logits.at(j)->grad += -prob_i * prob_j * prob_node->grad;
                 }
             }
         };
-        
+
         probabilities.push_back(prob_node);
     }
 
