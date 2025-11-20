@@ -7,7 +7,7 @@
 
 class Network : public Module {
 protected:
-    std::vector<std::pair<int, Activation>> networkSpecs;
+    std::vector<std::pair<int, Activation> > networkSpecs;
     std::vector<Layer> layers;
 
 public:
@@ -97,7 +97,7 @@ public:
      */
     virtual ModelMetadata getMetadata() {
         std::vector<int> hiddenLayerSizes;
-        for (size_t i = 1; i < networkSpecs.size()-1; i++) {
+        for (size_t i = 1; i < networkSpecs.size() - 1; i++) {
             hiddenLayerSizes.emplace_back(networkSpecs.at(i).first);
         }
         return ModelMetadata{this->networkSpecs.at(0).first, hiddenLayerSizes, parameters().size()};

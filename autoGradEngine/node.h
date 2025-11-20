@@ -7,10 +7,10 @@
 #include <unordered_set>
 #include <iostream>
 
-// This auto-differentiation engine uses lambda functions in C++ in order to create a way for us to bind the
-// backward() function with the respective derivative of each node. It also provides a number of operator over
-// loading functions that provide methods for the differentiation of simple arithmetic expressions like (+, -, *, /)
-
+/**
+* An auto-differentiation engine that is based on an expression tree, where the gradients flow from
+* last element in a topological sorted tree, all the way to its root elements.
+*/
 class Node {
 public:
     // stores a single scalar value and its gradient
@@ -19,17 +19,18 @@ public:
 
     // internal variables used for autograd graph construction
     std::function<void()> _backward;
-    std::vector<Node*> _prev;  // parents in the computation graph
-    std::string _op;           // the operation that produced this node could be arithmetic or another function
+    std::vector<Node *> _prev; // parents in the computation graph
+    std::string _op; // the operation that produced this node could be arithmetic or another function
 
-    explicit Node(double data, const std::vector<Node*>& children = {}, const std::string& op = "")
-        : data(data), grad(0.0), _backward([]{}), _prev(children), _op(op) {}
+    explicit Node(double data, const std::vector<Node *> &children = {}, const std::string &op = "")
+        : data(data), grad(0.0), _backward([] {
+        }), _prev(children), _op(op) {
+    }
 
-
-    Node* pow(double other) {
+    Node *pow(double other) {
         auto self = this;
         const double out_data = std::pow(self->data, other);
-        auto out = new Node(out_data, { self }, "**" + std::to_string(other));
+        auto out = new Node(out_data, {self}, "**" + std::to_string(other));
 
         out->_backward = [self, out, other]() {
             self->grad += (other * std::pow(self->data, other - 1)) * out->grad;
@@ -38,15 +39,36 @@ public:
         return out;
     }
 
+    static Node* log_node(Node* x, double epsilon = 1e-7) {
+        auto self = x;
+        // We clamp the data so that we do not run into issue that are caused by the calculation of log(0)
+        const double clampedData = std::max(self->data, epsilon);
+        const double outData = std::log(clampedData);
+        auto out = new Node(outData, {self}, "log");
+
+        out->_backward = [self, out, epsilon]() {
+            const double clamped = std::max(self->data, epsilon);
+            self->grad += (1.0 / clamped) * out->grad;
+        };
+
+        return out;
+    }
+
+    /**
+     * @brief Topologically sorts all the nodes in the expression graph where the calling node belongs to ,and
+     * then it runs back-propagation from the last node in the topologically sorted list to make sure the chain
+     * rule is followed rigorously.
+     *
+     */
     void backward() {
         // topological order all the children in the graph
-        std::vector<Node*> topo;
-        std::unordered_set<Node*> visited;
+        std::vector<Node *> topo;
+        std::unordered_set<Node *> visited;
 
-        std::function<void(Node*)> build_topo = [&](Node* v) {
+        std::function<void(Node *)> build_topo = [&](Node *v) {
             if (!v || visited.count(v)) return;
             visited.insert(v);
-            for (Node* child : v->_prev) {
+            for (Node *child: v->_prev) {
                 build_topo(child);
             }
             topo.push_back(v);
@@ -62,12 +84,14 @@ public:
     }
 };
 
+// The following is a list of operator overloading functions necessary to carry the fundamental arithmetic
+// expressions.
 
-inline Node* operator+(Node& a, Node& b) {
-    auto out = new Node(a.data + b.data, { &a, &b }, "+");
+inline Node *operator+(Node &a, Node &b) {
+    auto out = new Node(a.data + b.data, {&a, &b}, "+");
 
-    Node* pa = &a;
-    Node* pb = &b;
+    Node *pa = &a;
+    Node *pb = &b;
 
     out->_backward = [pa, pb, out]() {
         pa->grad += out->grad;
@@ -78,11 +102,11 @@ inline Node* operator+(Node& a, Node& b) {
 }
 
 
-inline Node* operator+(Node& a, const double b) {
+inline Node *operator+(Node &a, const double b) {
     auto pb = new Node(b);
-    auto out = new Node(a.data + pb->data, { &a, pb }, "+");
+    auto out = new Node(a.data + pb->data, {&a, pb}, "+");
 
-    Node* pa = &a;
+    Node *pa = &a;
     out->_backward = [pa, pb, out]() {
         pa->grad += out->grad;
         pb->grad += out->grad;
@@ -91,11 +115,11 @@ inline Node* operator+(Node& a, const double b) {
     return out;
 }
 
-inline Node* operator+(const double a, Node& b) {
+inline Node *operator+(const double a, Node &b) {
     auto pa = new Node(a);
-    auto out = new Node(pa->data + b.data, { pa, &b }, "+");
+    auto out = new Node(pa->data + b.data, {pa, &b}, "+");
 
-    Node* pb = &b;
+    Node *pb = &b;
     out->_backward = [pa, pb, out]() {
         pa->grad += out->grad;
         pb->grad += out->grad;
@@ -105,11 +129,11 @@ inline Node* operator+(const double a, Node& b) {
 }
 
 
-inline Node* operator*(Node& a, Node& b) {
-    auto out = new Node(a.data * b.data, { &a, &b }, "*");
+inline Node *operator*(Node &a, Node &b) {
+    auto out = new Node(a.data * b.data, {&a, &b}, "*");
 
-    Node* pa = &a;
-    Node* pb = &b;
+    Node *pa = &a;
+    Node *pb = &b;
     out->_backward = [pa, pb, out]() {
         pa->grad += pb->data * out->grad;
         pb->grad += pa->data * out->grad;
@@ -118,11 +142,11 @@ inline Node* operator*(Node& a, Node& b) {
     return out;
 }
 
-inline Node* operator*(Node& a, const double b) {
+inline Node *operator*(Node &a, const double b) {
     auto pb = new Node(b);
-    auto out = new Node(a.data * pb->data, { &a, pb }, "*");
+    auto out = new Node(a.data * pb->data, {&a, pb}, "*");
 
-    Node* pa = &a;
+    Node *pa = &a;
     out->_backward = [pa, pb, out]() {
         pa->grad += pb->data * out->grad;
         pb->grad += pa->data * out->grad;
@@ -132,11 +156,11 @@ inline Node* operator*(Node& a, const double b) {
 }
 
 // scalar * a  (rmul)
-inline Node* operator*(const double a, Node& b) {
+inline Node *operator*(const double a, Node &b) {
     auto pa = new Node(a);
-    auto out = new Node(pa->data * b.data, { pa, &b }, "*");
+    auto out = new Node(pa->data * b.data, {pa, &b}, "*");
 
-    Node* pb = &b;
+    Node *pb = &b;
     out->_backward = [pa, pb, out]() {
         pa->grad += pb->data * out->grad;
         pb->grad += pa->data * out->grad;
@@ -146,19 +170,18 @@ inline Node* operator*(const double a, Node& b) {
 }
 
 
-inline Node* operator-(Node& a) {
+inline Node *operator-(Node &a) {
     return a * -1.0;
 }
 
 
-inline Node* operator/(Node& a, Node& b) {
-    auto out = new Node(a.data / b.data, { &a, &b }, "/");
+inline Node *operator/(Node &a, Node &b) {
+    auto out = new Node(a.data / b.data, {&a, &b}, "/");
 
-    Node* pa = &a;
-    Node* pb = &b;
+    Node *pa = &a;
+    Node *pb = &b;
 
     out->_backward = [pa, pb, out]() {
-
         pa->grad += (1.0 / pb->data) * out->grad;
 
         const double b2 = pb->data * pb->data;
@@ -169,10 +192,10 @@ inline Node* operator/(Node& a, Node& b) {
 }
 
 
-inline Node* operator/(Node& a, double b) {
-    auto out = new Node(a.data / b, { &a }, "/");
+inline Node *operator/(Node &a, double b) {
+    auto out = new Node(a.data / b, {&a}, "/");
 
-    Node* pa = &a;
+    Node *pa = &a;
 
     out->_backward = [pa, b, out]() {
         // dz/da = 1 / b
@@ -183,10 +206,10 @@ inline Node* operator/(Node& a, double b) {
     return out;
 }
 
-inline Node* operator/(double a, Node& b) {
-    auto out = new Node(a / b.data, { &b }, "/");
+inline Node *operator/(double a, Node &b) {
+    auto out = new Node(a / b.data, {&b}, "/");
 
-    Node* pb = &b;
+    Node *pb = &b;
 
     out->_backward = [pb, a, out]() {
         // dz/db = -a / b^2
@@ -199,7 +222,7 @@ inline Node* operator/(double a, Node& b) {
 }
 
 
-inline std::ostream& operator<<(std::ostream& os, const Node& n) {
+inline std::ostream &operator<<(std::ostream &os, const Node &n) {
     os << "Node(data=" << n.data << ", grad=" << n.grad << ")";
     return os;
 }

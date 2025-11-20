@@ -10,8 +10,8 @@
 #include "utils/helperFunctions.h"
 
 class Trainer {
-    Network* network;
-    std::function<Node*(const std::vector<Node*>&, double)> lossFunction;
+    Network *network;
+    std::function<Node*(const std::vector<Node *> &, double)> lossFunction;
     SGD optimizer;
     int epochs;
     int batchSize;
@@ -29,19 +29,18 @@ public:
      * @param batch_size - batch size for gradient accumulation
      * @param print_frequency - print loss every N epochs (default: epochs/10)
      */
-    Trainer(Network* net,
-            const std::function<Node*(const std::vector<Node*>&, double)>& loss_fn,
-            double learningRate = 0.01,
-            int num_epochs = 100,
-            int batch_size = 32,
-            int print_frequency = -1)
+    Trainer(Network *net,
+            const std::function<Node*(const std::vector<Node *> &, double)> &loss_fn,
+            const double learningRate = 0.01,
+            const int num_epochs = 100,
+            const int batch_size = 32,
+            const int print_frequency = -1)
         : network(net),
           lossFunction(loss_fn),
           optimizer(learningRate),
           epochs(num_epochs),
           batchSize(batch_size),
           verbose(true) {
-
         // Default: print 10 times during training
         printEvery = (print_frequency <= 0) ? std::max(1, num_epochs / 10) : print_frequency;
     }
@@ -49,7 +48,7 @@ public:
     /**
      * @brief Set the learning rate
      */
-    void setLearningRate(double lr) {
+    void setLearningRate(const double lr) {
         optimizer.set_learning_rate(lr);
     }
 
@@ -63,7 +62,7 @@ public:
     /**
      * @brief Set the number of epochs
      */
-    void setEpochs(int num_epochs) {
+    void setEpochs(const int num_epochs) {
         epochs = num_epochs;
         printEvery = std::max(1, num_epochs / 10);
     }
@@ -71,14 +70,14 @@ public:
     /**
      * @brief Set batch size
      */
-    void setBatchSize(int size) {
+    void setBatchSize(const int size) {
         batchSize = std::max(1, size);
     }
 
     /**
      * @brief Enable or disable verbose output
      */
-    void setVerbose(bool enable) {
+    void setVerbose(const bool enable) {
         verbose = enable;
     }
 
@@ -88,7 +87,7 @@ public:
      * @param dataset - vector of (input_vector, target_label) pairs
      * @return average loss after training
      */
-    double train(const std::vector<std::pair<std::vector<double>, double>>& dataset) {
+    double train(const std::vector<std::pair<std::vector<double>, double> > &dataset) {
         if (dataset.empty()) {
             throw std::invalid_argument("Dataset cannot be empty");
         }
@@ -114,17 +113,17 @@ public:
             std::vector<double> accumulatedGradients(network->parameters().size(), 0.0);
 
             // Iterate through dataset
-            for (const auto& sample : dataset) {
-                const auto& inputs = sample.first;
+            for (const auto &sample: dataset) {
+                const auto &inputs = sample.first;
                 const double target = sample.second;
 
                 auto inputNodes = helper::createInputNodes(inputs);
 
                 // Forward pass
-                std::vector<Node*> predictions = (*network)(inputNodes);
+                std::vector<Node *> predictions = (*network)(inputNodes);
 
                 // Compute loss
-                Node* loss = lossFunction(predictions, target);
+                Node *loss = lossFunction(predictions, target);
                 epochLoss += loss->data;
 
                 // Backward pass
@@ -163,8 +162,8 @@ public:
             if (verbose && (epoch + 1) % printEvery == 0) {
                 double avgLoss = epochLoss / static_cast<double>(dataset.size());
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
-                         << " | Loss: " << std::fixed << std::setprecision(6) << avgLoss
-                         << std::endl;
+                        << " | Loss: " << std::fixed << std::setprecision(6) << avgLoss
+                        << std::endl;
             }
         }
 

@@ -12,42 +12,44 @@ struct ModelMetadata {
     std::vector<int> hiddenLayerSizes;
     size_t totalParameters;
 
-    ModelMetadata() : inputVectorSize(0), totalParameters(0) {}
+    ModelMetadata() : inputVectorSize(0), totalParameters(0) {
+    }
 
-    ModelMetadata(const int inputs, const std::vector<int>& hiddenSizes, const size_t numParams)
-        : inputVectorSize(inputs), hiddenLayerSizes(hiddenSizes), totalParameters(numParams) {}
+    ModelMetadata(const int inputs, const std::vector<int> &hiddenSizes, const size_t numParams)
+        : inputVectorSize(inputs), hiddenLayerSizes(hiddenSizes), totalParameters(numParams) {
+    }
 };
 
 class ModelSerializer {
 public:
     // Save model with metadata
-    static bool saveWithMetadata(const std::vector<Node*>& parameters,
-                                   const ModelMetadata& metadata,
-                                   const std::string& filepath) {
+    static bool saveWithMetadata(const std::vector<Node *> &parameters,
+                                 const ModelMetadata &metadata,
+                                 const std::string &filepath) {
         std::ofstream file(filepath, std::ios::binary);
         if (!file.is_open()) {
             return false;
         }
 
         // Write metadata
-        file.write(reinterpret_cast<const char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        file.write(reinterpret_cast<const char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = metadata.hiddenLayerSizes.size();
-        file.write(reinterpret_cast<const char*>(&hidden_size), sizeof(hidden_size));
+        file.write(reinterpret_cast<const char *>(&hidden_size), sizeof(hidden_size));
 
-        for (int layer_size : metadata.hiddenLayerSizes) {
-            file.write(reinterpret_cast<const char*>(&layer_size), sizeof(layer_size));
+        for (int layer_size: metadata.hiddenLayerSizes) {
+            file.write(reinterpret_cast<const char *>(&layer_size), sizeof(layer_size));
         }
 
-        file.write(reinterpret_cast<const char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        file.write(reinterpret_cast<const char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         // Write parameters
         size_t num_params = parameters.size();
-        file.write(reinterpret_cast<const char*>(&num_params), sizeof(num_params));
+        file.write(reinterpret_cast<const char *>(&num_params), sizeof(num_params));
 
-        for (const Node* param : parameters) {
+        for (const Node *param: parameters) {
             if (param) {
-                file.write(reinterpret_cast<const char*>(&param->data), sizeof(param->data));
+                file.write(reinterpret_cast<const char *>(&param->data), sizeof(param->data));
             }
         }
 
@@ -56,7 +58,7 @@ public:
     }
 
     // Load model metadata without loading parameters
-    static ModelMetadata loadMetadata(const std::string& filepath) {
+    static ModelMetadata loadMetadata(const std::string &filepath) {
         std::ifstream file(filepath, std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error("Failed to open file: " + filepath);
@@ -65,26 +67,26 @@ public:
         ModelMetadata metadata;
 
         // Read metadata
-        file.read(reinterpret_cast<char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        file.read(reinterpret_cast<char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = 0;
-        file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));
+        file.read(reinterpret_cast<char *>(&hidden_size), sizeof(hidden_size));
 
         metadata.hiddenLayerSizes.resize(hidden_size);
         for (size_t i = 0; i < hidden_size; ++i) {
-            file.read(reinterpret_cast<char*>(&metadata.hiddenLayerSizes.at(i)),
-                     sizeof(metadata.hiddenLayerSizes.at(i)));
+            file.read(reinterpret_cast<char *>(&metadata.hiddenLayerSizes.at(i)),
+                      sizeof(metadata.hiddenLayerSizes.at(i)));
         }
 
-        file.read(reinterpret_cast<char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        file.read(reinterpret_cast<char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         file.close();
         return metadata;
     }
 
     // Load parameters with validation
-    static bool loadWithValidation(std::vector<Node*>& parameters,
-                                    const std::string& filepath) {
+    static bool loadWithValidation(std::vector<Node *> &parameters,
+                                   const std::string &filepath) {
         std::ifstream file(filepath, std::ios::binary);
         if (!file.is_open()) {
             return false;
@@ -92,21 +94,21 @@ public:
 
         // Skip metadata section
         ModelMetadata metadata;
-        file.read(reinterpret_cast<char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        file.read(reinterpret_cast<char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = 0;
-        file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));
+        file.read(reinterpret_cast<char *>(&hidden_size), sizeof(hidden_size));
 
         for (size_t i = 0; i < hidden_size; ++i) {
             int dummy;
-            file.read(reinterpret_cast<char*>(&dummy), sizeof(dummy));
+            file.read(reinterpret_cast<char *>(&dummy), sizeof(dummy));
         }
 
-        file.read(reinterpret_cast<char*>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        file.read(reinterpret_cast<char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
 
         // Read parameters
         size_t num_params = 0;
-        file.read(reinterpret_cast<char*>(&num_params), sizeof(num_params));
+        file.read(reinterpret_cast<char *>(&num_params), sizeof(num_params));
 
         if (num_params != parameters.size()) {
             file.close();
@@ -116,9 +118,9 @@ public:
             );
         }
 
-        for (Node* param : parameters) {
+        for (Node *param: parameters) {
             if (param) {
-                file.read(reinterpret_cast<char*>(&param->data), sizeof(param->data));
+                file.read(reinterpret_cast<char *>(&param->data), sizeof(param->data));
             }
         }
 

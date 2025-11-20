@@ -14,17 +14,17 @@ namespace helper {
         return -1;
     }
 
-    inline std::vector<Node*> createInputNodes(const std::vector<double>& inputs) {
-        std::vector<Node*> inputNodes;
+    inline std::vector<Node *> createInputNodes(const std::vector<double> &inputs) {
+        std::vector<Node *> inputNodes;
         inputNodes.reserve(inputs.size());
-        for (const double val : inputs) {
+        for (const double val: inputs) {
             inputNodes.push_back(new Node(val));
         }
         return inputNodes;
     }
 
-    inline void deleteInputNodes(std::vector<Node*> &nodes) {
-        for (const Node* node : nodes) {
+    inline void deleteInputNodes(std::vector<Node *> &nodes) {
+        for (const Node *node: nodes) {
             delete node;
         }
     }

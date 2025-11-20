@@ -11,8 +11,8 @@ public:
     // Class 1: points around (1, 1)
     // Class 2: points around (1, 0)
 
-    static std::vector<std::pair<std::vector<double>, double>> get_data() {
-        std::vector<std::pair<std::vector<double>, double>> data;
+    static std::vector<std::pair<std::vector<double>, double> > get_data() {
+        std::vector<std::pair<std::vector<double>, double> > data;
 
         // Class 0: Lower left region
         data.push_back({{0.0, 0.0}, 0.0});
@@ -38,9 +38,9 @@ public:
         return data;
     }
 
-    static std::vector<std::pair<std::vector<double>, double>> get_repeated(int n) {
+    static std::vector<std::pair<std::vector<double>, double> > get_repeated(int n) {
         auto base_data = get_data();
-        std::vector<std::pair<std::vector<double>, double>> repeated;
+        std::vector<std::pair<std::vector<double>, double> > repeated;
         repeated.reserve(base_data.size() * n);
 
         for (int i = 0; i < n; ++i) {

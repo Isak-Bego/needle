@@ -7,13 +7,15 @@
 #include <nnComponents/trainers/trainer.h>
 #include <utils/serialization/modelSerializer.h>
 #include <iostream>
-
 #include "utils/helperFunctions.h"
 
+/**
+ * A classification model that can make the distinction between n classes of objects.
+ */
 class MultiClassClassifier final : public Network {
     int numClasses;
+
 public:
-    // For multi-class classification, we use softmax on the output layer
     MultiClassClassifier(const int numberOfInputs,
                          const std::vector<int> &hiddenLayerSizes,
                          const int numberOfClasses)
@@ -34,6 +36,7 @@ public:
         }
 
         // Output layer: LINEAR activation (softmax will be applied separately)
+        // The last layer will contain the logits that we will turn into a probability distribution using the softmax.
         networkSpecs.emplace_back(numberOfClasses, Activation::LINEAR);
 
         return networkSpecs;
@@ -48,6 +51,11 @@ public:
         return s + "]";
     }
 
+    /**
+     *
+     * @param filepath - location of the .bin file that holds the metadata + parameters of a saved model
+     * @return
+     */
     static MultiClassClassifier *loadFromFile(const std::string &filepath) {
         try {
             // Load metadata first
@@ -55,8 +63,8 @@ public:
 
             // Get number of classes from the architecture
             // Last element in hiddenLayerSizes represents output layer size
-            int numClasses = metadata.hiddenLayerSizes.back();
-            std::vector<int> actualHiddenLayers(
+            int const numClasses = metadata.hiddenLayerSizes.back();
+            std::vector<int> const actualHiddenLayers(
                 metadata.hiddenLayerSizes.begin(),
                 metadata.hiddenLayerSizes.end() - 1
             );
@@ -81,19 +89,25 @@ public:
             std::cout << "  - Total parameters: " << metadata.totalParameters << std::endl;
 
             return model;
-
         } catch (const std::exception &e) {
             std::cerr << "Error loading model: " << e.what() << std::endl;
             return nullptr;
         }
     }
 
+    /**
+     *
+     * @param learningRate - the rate at which we will be updating the parameters of the network
+     * @param epochs - the number of iterations through the training data
+     * @param batchSize - the number of samples considered before making a parameter update
+     * @param dataset - the dataset that we are going to be using to train the network
+     */
     void train(const double learningRate, const int epochs, const int batchSize,
                std::vector<std::pair<std::vector<double>, double> > &dataset) override {
         // Create loss function lambda that handles softmax + cross-entropy
-        auto loss_fn = [this](const std::vector<Node *> &logits, double target) -> Node *{
+        auto loss_fn = [this](const std::vector<Node *> &logits, const double target) -> Node *{
             // Apply softmax to logits
-            std::vector<Node *> probabilities = softmax(logits);
+            const std::vector<Node *> probabilities = softmax(logits);
 
             // Compute categorical cross-entropy loss
             Node *loss = CategoricalCrossEntropyLoss::compute(probabilities, static_cast<int>(target));
@@ -107,9 +121,9 @@ public:
     }
 
     int predict(std::vector<double> &input) override {
-        auto inputNodes = helper::createInputNodes(input);
+        const auto inputNodes = helper::createInputNodes(input);
 
-        std::vector<Node *> logits = (*this)(inputNodes);
+        const std::vector<Node *> logits = (*this)(inputNodes);
         std::vector<Node *> probabilities = softmax(logits);
 
         // Find class with the highest probability

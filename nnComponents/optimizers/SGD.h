@@ -7,10 +7,11 @@ class SGD {
     double learning_rate;
 
 public:
-    explicit SGD(double lr = 0.01) : learning_rate(lr) {}
+    explicit SGD(const double lr = 0.01) : learning_rate(lr) {
+    }
 
-    void step(std::vector<Node*>& parameters) const{
-        for (Node* param : parameters) {
+    void step(std::vector<Node *> &parameters) const {
+        for (Node *param: parameters) {
             if (param) {
                 // Update: param = param - learning_rate * gradient
                 param->data -= learning_rate * param->grad;
@@ -18,7 +19,7 @@ public:
         }
     }
 
-    void set_learning_rate(double lr) {
+    void set_learning_rate(const double lr) {
         learning_rate = lr;
     }
 

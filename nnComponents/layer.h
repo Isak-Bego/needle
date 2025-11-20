@@ -3,7 +3,7 @@
 #include <nnComponents/module.h>
 #include <nnComponents/neuron.h>
 
-class  Layer : public Module {
+class Layer final : public Module {
     std::vector<Neuron> neurons;
 
 public:
@@ -14,18 +14,18 @@ public:
         }
     }
 
-    std::vector<Node*> operator()(const std::vector<Node*>& x) {
-        std::vector<Node*> output;
+    std::vector<Node *> operator()(const std::vector<Node *> &x) {
+        std::vector<Node *> output;
         output.reserve(neurons.size());
-        for (auto& neuron : neurons) {
+        for (auto &neuron: neurons) {
             output.push_back(neuron(x));
         }
         return output;
     }
 
-    std::vector<Node*> parameters() override {
-        std::vector<Node*> layerParameters;
-        for (auto& neuron : neurons) {
+    std::vector<Node *> parameters() override {
+        std::vector<Node *> layerParameters;
+        for (auto &neuron: neurons) {
             auto neuronParameters = neuron.parameters();
             layerParameters.insert(layerParameters.end(), neuronParameters.begin(), neuronParameters.end());
         }
@@ -42,7 +42,7 @@ public:
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Layer& layer) {
+inline std::ostream &operator<<(std::ostream &os, const Layer &layer) {
     return os << layer.representation();
 }
 

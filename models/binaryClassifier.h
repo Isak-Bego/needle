@@ -8,11 +8,13 @@
 #include <utils/serialization/modelSerializer.h>
 #include <iostream>
 
+/**
+ * A classification model that can make the distinction between two classes of objects.
+ */
 class BinaryClassifier final : public Network {
 public:
-    // For binary classification, we use sigmoid on the output layer
     BinaryClassifier(const int numberOfInputs, const std::vector<int> &hiddenLayerSizes)
-        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes)){
+        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes)) {
     }
 
     /// Helper function for creating a binary classifier network
@@ -23,6 +25,8 @@ public:
         for (int hiddenLayerSize: hiddenLayerSizes) {
             networkSpecs.emplace_back(hiddenLayerSize, Activation::RELU);
         }
+        // For binary classification, we use sigmoid on the output layer, so that we get a number in the range
+        // (0, 1)
         networkSpecs.emplace_back(1, Activation::SIGMOID);
 
         return networkSpecs;
@@ -37,10 +41,15 @@ public:
         return s + "]";
     }
 
+    /**
+     *
+     * @param filepath - location of the .bin file that holds the metadata + parameters of a saved model
+     * @return
+     */
     static BinaryClassifier *loadFromFile(const std::string &filepath) {
         try {
             // Load metadata first
-            ModelMetadata metadata = ModelSerializer::loadMetadata(filepath);
+            const ModelMetadata metadata = ModelSerializer::loadMetadata(filepath);
 
             // Create model with the correct architecture
             auto *model = new BinaryClassifier(metadata.inputVectorSize, metadata.hiddenLayerSizes);
@@ -63,30 +72,44 @@ public:
         }
     }
 
+    /**
+     *
+     * @param learningRate - the rate at which we will be updating the parameters of the network
+     * @param epochs - the number of iterations through the training data
+     * @param batchSize - the number of samples considered before making a parameter update
+     * @param dataset - the dataset that we are going to be using to train the network
+     */
     void train(const double learningRate, const int epochs, const int batchSize,
                std::vector<std::pair<std::vector<double>, double> > &dataset) override {
-
-        // Create loss function lambda
-        auto loss_fn = [](const std::vector<Node*>& predictions, double target) -> Node* {
+        // Create loss function lambda so that we pass it to the trainer
+        auto loss_fn = [](const std::vector<Node *> &predictions, const double target) -> Node *{
             return BinaryCrossEntropyLoss::compute(predictions.at(0), target);
         };
 
-        // Create and configure trainer
+        // Create the trainer object and then call the train method to start training the network
         Trainer trainer(this, loss_fn, learningRate, epochs, batchSize);
         trainer.train(dataset);
     }
 
-    int predict(std::vector<double> &input) override{
-        std::vector<Node *> input_nodes;
-        input_nodes.reserve(input.size());
+    /**
+     * @brief It is used to make inferences with a trained model.
+     *
+     * @param input - The input vector
+     * @return - The number of the class that was predicted by the model
+     */
+    int predict(std::vector<double> &input) override {
+        auto inputNodes = helper::createInputNodes(input);
 
         for (const double val: input) {
-            input_nodes.push_back(new Node(val));
+            inputNodes.push_back(new Node(val));
         }
 
-        Node *n = (*this)(input_nodes).at(0);
+        const Node *n = (*this)(inputNodes).at(0);
+        auto prediction = n->data;
 
-        return (n->data >= 0.5) ? 1 : 0;
+        helper::deleteInputNodes(inputNodes);
+
+        return (prediction >= 0.5) ? 1 : 0;
     }
 };
 

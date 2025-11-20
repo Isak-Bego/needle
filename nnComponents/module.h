@@ -8,12 +8,12 @@ class Module {
 public:
     virtual ~Module() = default;
 
-    virtual std::vector<Node*> parameters() {
+    virtual std::vector<Node *> parameters() {
         return {};
     }
 
     void clear_gradients() {
-        for (Node* p : parameters()) {
+        for (Node *p: parameters()) {
             if (p) p->grad = 0.0;
         }
     }
