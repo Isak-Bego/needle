@@ -3,6 +3,12 @@
 #include <models/multiClassClassifier.h>
 #include <utils/datasets/irisDataset.h>
 
+
+/* TODO:
+ * 1. Refactor the library to a point where I have an exact idea of what is going on, where.
+ * 2. Improve the convergence of the network by doing normalization of inputs
+ * 3. 
+ */
 int main() {
 
     std::cout << "=== Training New Multi-Class Model ===" << std::endl;

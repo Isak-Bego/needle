@@ -1,5 +1,7 @@
 #ifndef HELPERFUNCTIONS_H
 #define HELPERFUNCTIONS_H
+#include <vector>
+#include <autoGradEngine/node.h>
 
 namespace helper {
     template<typename T>
@@ -10,6 +12,21 @@ namespace helper {
             }
         }
         return -1;
+    }
+
+    inline std::vector<Node*> createInputNodes(const std::vector<double>& inputs) {
+        std::vector<Node*> input_nodes;
+        input_nodes.reserve(inputs.size());
+        for (const double val : inputs) {
+            input_nodes.push_back(new Node(val));
+        }
+        return input_nodes;
+    }
+
+    inline void deleteInputNodes(std::vector<Node*> &nodes) {
+        for (const Node* node : nodes) {
+            delete node;
+        }
     }
 }
 

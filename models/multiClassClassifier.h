@@ -9,7 +9,8 @@
 #include <utils/serialization/modelSerializer.h>
 #include <iostream>
 #include <iomanip>
-#include <algorithm>
+
+#include "utils/helperFunctions.h"
 
 class MultiClassClassifier final : public Network {
 public:
@@ -94,6 +95,7 @@ public:
 
     void train(const double learningRate, const int epochs, const int batchSize,
                std::vector<std::pair<std::vector<double>, double>>& dataset) override {
+
         const auto self = this;
         const SGD optimizer(learningRate);
         const int print_every = epochs / 10;
@@ -103,21 +105,22 @@ public:
         std::cout << std::endl;
 
         for (int epoch = 0; epoch < epochs; ++epoch) {
+            // Reset the variables for every epoch
             double total_loss = 0.0;
             int ctr = 0;
 
             std::vector<double> accumulatedBatchParamGradients;
             accumulatedBatchParamGradients.assign(self->parameters().size(), 0.0);
 
+            // Go through the whole dataset
             while (ctr < dataset.size()) {
+                // Retrieve the input vector and the corresponding target output
                 const auto& inputs = dataset.at(ctr).first;
                 const int target_class = static_cast<int>(dataset.at(ctr).second);
 
-                std::vector<Node*> input_nodes;
-                input_nodes.reserve(inputs.size());
-                for (const double val : inputs) {
-                    input_nodes.push_back(new Node(val));
-                }
+                // In order for our input vectors to participate in the expression tree that is created by
+                // the differentiation engine their values have to be wrapped by a Node object.
+                auto input_nodes = helper::createInputNodes(inputs);
 
                 // Forward pass: get logits
                 std::vector<Node*> logits = (*this)(input_nodes);
@@ -125,13 +128,18 @@ public:
                 // Apply softmax to get probabilities
                 std::vector<Node*> probabilities = softmax(logits);
 
-                // Compute loss
+                // Compute the cross-entropy loss using the probabilities that we have obtained and comparing them
+                // to our target classes
                 Node* loss = CategoricalCrossEntropyLoss::compute(probabilities, target_class);
                 total_loss += loss->data;
 
+                // Now that we have computed our loss, we clear the gradients of the network to make sure that they don't
+                // accumulate from previous runs ,and then we run the backwards method to propagate the partial derivatives.
                 this->clear_gradients();
                 loss->backward();
 
+                //TODO: The block below is used to accumulate the gradients of a batch of inputs. We can kind of export
+                // this in a function so that people can use it elsewhere in the library
                 for (size_t i = 0; i < this->parameters().size(); i++) {
                     accumulatedBatchParamGradients.at(i) += this->parameters().at(i)->grad;
                 }
@@ -148,15 +156,14 @@ public:
                     accumulatedBatchParamGradients.assign(this->parameters().size(), 0.0);
                 }
 
-                for (const Node* n : input_nodes) {
-                    delete n;
-                }
+                helper::deleteInputNodes(input_nodes);
 
                 ++ctr;
             }
 
             ctr = 0;
 
+            //Note for myself: This happens after one epoch
             if ((epoch + 1) % print_every == 0) {
                 double avg_loss = total_loss / static_cast<double>(dataset.size());
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
