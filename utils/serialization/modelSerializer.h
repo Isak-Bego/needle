@@ -8,14 +8,14 @@
 #include <autoGradEngine/node.h>
 
 struct ModelMetadata {
-    int numInputs;
+    int inputVectorSize;
     std::vector<int> hiddenLayerSizes;
     size_t totalParameters;
 
-    ModelMetadata() : numInputs(0), totalParameters(0) {}
+    ModelMetadata() : inputVectorSize(0), totalParameters(0) {}
 
     ModelMetadata(const int inputs, const std::vector<int>& hiddenSizes, const size_t numParams)
-        : numInputs(inputs), hiddenLayerSizes(hiddenSizes), totalParameters(numParams) {}
+        : inputVectorSize(inputs), hiddenLayerSizes(hiddenSizes), totalParameters(numParams) {}
 };
 
 class ModelSerializer {
@@ -30,7 +30,7 @@ public:
         }
 
         // Write metadata
-        file.write(reinterpret_cast<const char*>(&metadata.numInputs), sizeof(metadata.numInputs));
+        file.write(reinterpret_cast<const char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = metadata.hiddenLayerSizes.size();
         file.write(reinterpret_cast<const char*>(&hidden_size), sizeof(hidden_size));
@@ -65,7 +65,7 @@ public:
         ModelMetadata metadata;
 
         // Read metadata
-        file.read(reinterpret_cast<char*>(&metadata.numInputs), sizeof(metadata.numInputs));
+        file.read(reinterpret_cast<char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = 0;
         file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));
@@ -92,7 +92,7 @@ public:
 
         // Skip metadata section
         ModelMetadata metadata;
-        file.read(reinterpret_cast<char*>(&metadata.numInputs), sizeof(metadata.numInputs));
+        file.read(reinterpret_cast<char*>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
 
         size_t hidden_size = 0;
         file.read(reinterpret_cast<char*>(&hidden_size), sizeof(hidden_size));

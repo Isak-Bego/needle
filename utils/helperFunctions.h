@@ -15,12 +15,12 @@ namespace helper {
     }
 
     inline std::vector<Node*> createInputNodes(const std::vector<double>& inputs) {
-        std::vector<Node*> input_nodes;
-        input_nodes.reserve(inputs.size());
+        std::vector<Node*> inputNodes;
+        inputNodes.reserve(inputs.size());
         for (const double val : inputs) {
-            input_nodes.push_back(new Node(val));
+            inputNodes.push_back(new Node(val));
         }
-        return input_nodes;
+        return inputNodes;
     }
 
     inline void deleteInputNodes(std::vector<Node*> &nodes) {

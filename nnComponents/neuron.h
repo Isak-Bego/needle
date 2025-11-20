@@ -63,6 +63,7 @@ public:
             case Activation::SIGMOID: act_str = "Sigmoid"; break;
             case Activation::LINEAR: act_str = "Linear"; break;
             case Activation::INPUT: act_str = "Input"; break;
+            case Activation::SOFTMAX: act_str = "Softmax"; break;
         }
         return act_str + "Neuron(" + std::to_string(weights.size()) + ")";
     }

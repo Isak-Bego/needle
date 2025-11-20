@@ -2,34 +2,34 @@
 #define MULTICLASSCLASSIFIER_H
 
 #include <nnComponents/network.h>
-#include <nnComponents/layer.h>
-#include <nnComponents/optimizers/SGD.h>
 #include <nnComponents/lossFunctions/categoricalCrossEntropy.h>
 #include <nnComponents/activations/softmax.h>
+#include <nnComponents/trainers/trainer.h>
 #include <utils/serialization/modelSerializer.h>
 #include <iostream>
-#include <iomanip>
 
 #include "utils/helperFunctions.h"
 
 class MultiClassClassifier final : public Network {
+    int numClasses;
 public:
     // For multi-class classification, we use softmax on the output layer
     MultiClassClassifier(const int numberOfInputs,
-                        const std::vector<int>& hiddenLayerSizes,
-                        const int numberOfClasses)
-        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes, numberOfClasses)) {
+                         const std::vector<int> &hiddenLayerSizes,
+                         const int numberOfClasses)
+        : Network(getNetworkSpecs(numberOfInputs, hiddenLayerSizes, numberOfClasses)),
+          numClasses(numberOfClasses) {
     }
 
     /// Helper function for creating a multi-class classifier network
-    static std::vector<std::pair<int, Activation>> getNetworkSpecs(
-            int numberOfInputs,
-            const std::vector<int>& hiddenLayerSizes,
-            int numberOfClasses) {
-        std::vector<std::pair<int, Activation>> networkSpecs;
+    static std::vector<std::pair<int, Activation> > getNetworkSpecs(
+        int numberOfInputs,
+        const std::vector<int> &hiddenLayerSizes,
+        int numberOfClasses) {
+        std::vector<std::pair<int, Activation> > networkSpecs;
         networkSpecs.emplace_back(numberOfInputs, Activation::INPUT);
 
-        for (int hiddenLayerSize : hiddenLayerSizes) {
+        for (int hiddenLayerSize: hiddenLayerSizes) {
             networkSpecs.emplace_back(hiddenLayerSize, Activation::RELU);
         }
 
@@ -48,7 +48,7 @@ public:
         return s + "]";
     }
 
-    static MultiClassClassifier* loadFromFile(const std::string& filepath) {
+    static MultiClassClassifier *loadFromFile(const std::string &filepath) {
         try {
             // Load metadata first
             ModelMetadata metadata = ModelSerializer::loadMetadata(filepath);
@@ -62,208 +62,67 @@ public:
             );
 
             // Create model with the correct architecture
-            auto* model = new MultiClassClassifier(
-                metadata.numInputs,
+            auto *model = new MultiClassClassifier(
+                metadata.inputVectorSize,
                 actualHiddenLayers,
                 numClasses
             );
 
             // Load the parameters
-            std::vector<Node*> params = model->parameters();
+            std::vector<Node *> params = model->parameters();
             if (!ModelSerializer::loadWithValidation(params, filepath)) {
                 delete model;
                 return nullptr;
             }
 
             std::cout << "✓ Model loaded successfully!" << std::endl;
-            std::cout << "  - Inputs: " << metadata.numInputs << std::endl;
-            std::cout << "  - Hidden layers: [";
-            for (size_t i = 0; i < actualHiddenLayers.size(); ++i) {
-                std::cout << actualHiddenLayers.at(i);
-                if (i + 1 < actualHiddenLayers.size()) std::cout << ", ";
-            }
-            std::cout << "]" << std::endl;
+            std::cout << "  - Input vector size: " << metadata.inputVectorSize << std::endl;
             std::cout << "  - Output classes: " << numClasses << std::endl;
             std::cout << "  - Total parameters: " << metadata.totalParameters << std::endl;
 
             return model;
-        } catch (const std::exception& e) {
+
+        } catch (const std::exception &e) {
             std::cerr << "Error loading model: " << e.what() << std::endl;
             return nullptr;
         }
     }
 
     void train(const double learningRate, const int epochs, const int batchSize,
-               std::vector<std::pair<std::vector<double>, double>>& dataset) override {
+               std::vector<std::pair<std::vector<double>, double> > &dataset) override {
+        // Create loss function lambda that handles softmax + cross-entropy
+        auto loss_fn = [this](const std::vector<Node *> &logits, double target) -> Node *{
+            // Apply softmax to logits
+            std::vector<Node *> probabilities = softmax(logits);
 
-        const auto self = this;
-        const SGD optimizer(learningRate);
-        const int print_every = epochs / 10;
+            // Compute categorical cross-entropy loss
+            Node *loss = CategoricalCrossEntropyLoss::compute(probabilities, static_cast<int>(target));
 
-        std::cout << "Training for " << epochs << " epochs..." << std::endl;
-        std::cout << "The size of the dataset is: " << dataset.size() << std::endl;
-        std::cout << std::endl;
+            return loss;
+        };
 
-        for (int epoch = 0; epoch < epochs; ++epoch) {
-            // Reset the variables for every epoch
-            double total_loss = 0.0;
-            int ctr = 0;
-
-            std::vector<double> accumulatedBatchParamGradients;
-            accumulatedBatchParamGradients.assign(self->parameters().size(), 0.0);
-
-            // Go through the whole dataset
-            while (ctr < dataset.size()) {
-                // Retrieve the input vector and the corresponding target output
-                const auto& inputs = dataset.at(ctr).first;
-                const int target_class = static_cast<int>(dataset.at(ctr).second);
-
-                // In order for our input vectors to participate in the expression tree that is created by
-                // the differentiation engine their values have to be wrapped by a Node object.
-                auto input_nodes = helper::createInputNodes(inputs);
-
-                // Forward pass: get logits
-                std::vector<Node*> logits = (*this)(input_nodes);
-
-                // Apply softmax to get probabilities
-                std::vector<Node*> probabilities = softmax(logits);
-
-                // Compute the cross-entropy loss using the probabilities that we have obtained and comparing them
-                // to our target classes
-                Node* loss = CategoricalCrossEntropyLoss::compute(probabilities, target_class);
-                total_loss += loss->data;
-
-                // Now that we have computed our loss, we clear the gradients of the network to make sure that they don't
-                // accumulate from previous runs ,and then we run the backwards method to propagate the partial derivatives.
-                this->clear_gradients();
-                loss->backward();
-
-                //TODO: The block below is used to accumulate the gradients of a batch of inputs. We can kind of export
-                // this in a function so that people can use it elsewhere in the library
-                for (size_t i = 0; i < this->parameters().size(); i++) {
-                    accumulatedBatchParamGradients.at(i) += this->parameters().at(i)->grad;
-                }
-
-                if ((ctr + 1) % batchSize == 0 || ctr == dataset.size() - 1) {
-                    std::vector<Node*> modelParams = this->parameters();
-                    for (size_t i = 0; i < this->parameters().size(); i++) {
-                        double divisor = (ctr + 1) % batchSize != 0 ? (ctr + 1) % batchSize : batchSize;
-                        accumulatedBatchParamGradients.at(i) /= divisor;
-                        modelParams.at(i)->grad = accumulatedBatchParamGradients.at(i);
-                    }
-
-                    optimizer.step(modelParams);
-                    accumulatedBatchParamGradients.assign(this->parameters().size(), 0.0);
-                }
-
-                helper::deleteInputNodes(input_nodes);
-
-                ++ctr;
-            }
-
-            ctr = 0;
-
-            //Note for myself: This happens after one epoch
-            if ((epoch + 1) % print_every == 0) {
-                double avg_loss = total_loss / static_cast<double>(dataset.size());
-                std::cout << "Epoch " << std::setw(4) << (epoch + 1)
-                        << " | Loss: " << std::fixed << std::setprecision(6) << avg_loss
-                        << std::endl;
-            }
-        }
-
-        // Test the model
-        std::cout << "\nFinal predictions on training set:" << std::endl;
-        int correct = 0;
-        for (const auto& sample : dataset) {
-            const auto& inputs = sample.first;
-            const int target = static_cast<int>(sample.second);
-
-            std::vector<Node*> input_nodes;
-            input_nodes.reserve(inputs.size());
-            for (double val : inputs) {
-                input_nodes.push_back(new Node(val));
-            }
-
-            std::vector<Node*> logits = (*this)(input_nodes);
-            std::vector<Node*> probabilities = softmax(logits);
-
-            int predicted_class = 0;
-            double max_prob = probabilities.at(0)->data;
-            for (size_t i = 1; i < probabilities.size(); ++i) {
-                if (probabilities.at(i)->data > max_prob) {
-                    max_prob = probabilities.at(i)->data;
-                    predicted_class = static_cast<int>(i);
-                }
-            }
-
-            if (predicted_class == target) correct++;
-
-            std::cout << "Input: [";
-            for (size_t i = 0; i < inputs.size(); ++i) {
-                std::cout << inputs[i];
-                if (i + 1 < inputs.size()) std::cout << ", ";
-            }
-            std::cout << "] | Target: " << target
-                    << " | Predicted: " << predicted_class
-                    << " | Confidence: " << std::fixed << std::setprecision(4) << max_prob
-                    << " | " << (predicted_class == target ? "✓ CORRECT" : "✗ WRONG")
-                    << std::endl;
-
-            for (const Node* n : input_nodes) {
-                delete n;
-            }
-        }
-
-        double final_accuracy = static_cast<double>(correct) / static_cast<double>(dataset.size()) * 100.0;
-        std::cout << "\nFinal Training Accuracy: " << std::fixed << std::setprecision(2)
-                  << final_accuracy << "%" << std::endl;
-        std::cout << "Training complete!" << std::endl;
+        // Create and configure trainer
+        Trainer trainer(this, loss_fn, learningRate, epochs, batchSize);
+        trainer.train(dataset);
     }
 
-    int predict(std::vector<double>& input) override {
-        std::vector<Node*> input_nodes;
-        input_nodes.reserve(input.size());
+    int predict(std::vector<double> &input) override {
+        auto inputNodes = helper::createInputNodes(input);
 
-        for (const double val : input) {
-            input_nodes.push_back(new Node(val));
-        }
+        std::vector<Node *> logits = (*this)(inputNodes);
+        std::vector<Node *> probabilities = softmax(logits);
 
-        std::vector<Node*> logits = (*this)(input_nodes);
-        std::vector<Node*> probabilities = softmax(logits);
-
-        // Find class with highest probability
-        int predicted_class = 0;
-        double max_prob = probabilities.at(0)->data;
+        // Find class with the highest probability
+        int predictedClass = 0;
+        double maxProbability = probabilities.at(0)->data;
         for (size_t i = 1; i < probabilities.size(); ++i) {
-            if (probabilities.at(i)->data > max_prob) {
-                max_prob = probabilities.at(i)->data;
-                predicted_class = static_cast<int>(i);
+            if (probabilities.at(i)->data > maxProbability) {
+                maxProbability = probabilities.at(i)->data;
+                predictedClass = static_cast<int>(i);
             }
         }
 
-        return predicted_class;
-    }
-
-    // Additional method to get probabilities for all classes
-    std::vector<double> predict_proba(std::vector<double>& input) {
-        std::vector<Node*> input_nodes;
-        input_nodes.reserve(input.size());
-
-        for (const double val : input) {
-            input_nodes.push_back(new Node(val));
-        }
-
-        std::vector<Node*> logits = (*this)(input_nodes);
-        std::vector<Node*> probabilities = softmax(logits);
-
-        std::vector<double> result;
-        result.reserve(probabilities.size());
-        for (Node* prob : probabilities) {
-            result.push_back(prob->data);
-        }
-
-        return result;
+        return predictedClass;
     }
 
     ModelMetadata getMetadata() override {
@@ -278,14 +137,14 @@ public:
         allLayerSizes.push_back(networkSpecs.back().first);
 
         return ModelMetadata{
-            this->networkSpecs.at(0).first,  // numInputs
-            allLayerSizes,                    // hiddenLayerSizes + output layer
-            parameters().size()               // totalParameters
+            this->networkSpecs.at(0).first,
+            allLayerSizes,
+            parameters().size()
         };
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const MultiClassClassifier& m) {
+inline std::ostream &operator<<(std::ostream &os, const MultiClassClassifier &m) {
     return os << m.representation();
 }
 
