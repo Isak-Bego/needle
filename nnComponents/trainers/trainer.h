@@ -9,6 +9,8 @@
 #include <nnComponents/optimizers/SGD.h>
 #include "utils/helperFunctions.h"
 
+using DatasetFormat = std::vector<std::pair<std::vector<double>, double> >;
+
 class Trainer {
     Network *network;
     std::function<Node*(const std::vector<Node *> &, double)> lossFunction;
@@ -25,24 +27,24 @@ public:
      * @param net - pointer to the network to train
      * @param loss_fn - loss function that computes loss given predictions and target
      * @param learningRate - learning rate for SGD optimizer
-     * @param num_epochs - number of training epochs
-     * @param batch_size - batch size for gradient accumulation
-     * @param print_frequency - print loss every N epochs (default: epochs/10)
+     * @param epochsNum - number of training epochs
+     * @param batchSize - batch size for gradient accumulation
+     * @param printFrequency - print loss every N epochs (default: epochs/10)
      */
     Trainer(Network *net,
             const std::function<Node*(const std::vector<Node *> &, double)> &loss_fn,
             const double learningRate = 0.01,
-            const int num_epochs = 100,
-            const int batch_size = 32,
-            const int print_frequency = -1)
+            const int epochsNum = 100,
+            const int batchSize = 32,
+            const int printFrequency = -1)
         : network(net),
           lossFunction(loss_fn),
           optimizer(learningRate),
-          epochs(num_epochs),
-          batchSize(batch_size),
+          epochs(epochsNum),
+          batchSize(batchSize),
           verbose(true) {
         // Default: print 10 times during training
-        printEvery = (print_frequency <= 0) ? std::max(1, num_epochs / 10) : print_frequency;
+        printEvery = std::max(1, epochsNum / 100);
     }
 
     /**
@@ -81,13 +83,69 @@ public:
         verbose = enable;
     }
 
+    double computeAccuracy(const DatasetFormat &subset) {
+
+        if (subset.empty()) return 0.0;
+
+        int correct = 0;
+
+        for (auto sample: subset) {
+            auto &inputs = sample.first;
+            double target = sample.second;
+
+            auto predictedClass = network->predict(inputs);
+
+            if (predictedClass == static_cast<int>(target)) {
+                correct++;
+            }
+        }
+
+        return static_cast<double>(correct) / static_cast<double>(subset.size());
+    }
+
+    /*
+     * Splits the data into training data, validation data and test data.
+     ***/
+    static std::tuple<DatasetFormat, DatasetFormat, DatasetFormat> splitData(const DatasetFormat &dataset) {
+        DatasetFormat datasetCopy = dataset;
+        int trainingDatasetSize, validationDatasetSize;
+        int datasetSize = static_cast<int>(dataset.size());
+        // We shuffle the dataset to make sure everything is random
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(datasetCopy.begin(), datasetCopy.end(), g);
+
+        if (datasetSize < 100) {
+            //Ratios 60%-20%-20%
+            trainingDatasetSize = static_cast<int>(datasetSize * 0.6);
+            validationDatasetSize = static_cast<int>(datasetSize * 0.2);
+        } else if (datasetSize < 100000) {
+            //Ratios 70%-15%-15%
+            trainingDatasetSize = static_cast<int>(datasetSize * 0.70);
+            validationDatasetSize = static_cast<int>(datasetSize * 0.15);
+        } else {
+            //Ratios 98%-1%-1%
+            trainingDatasetSize = static_cast<int>(datasetSize * 0.98);
+            validationDatasetSize = static_cast<int>(datasetSize * 0.01);
+        }
+
+        DatasetFormat trainingDataset(datasetCopy.begin() + 0, datasetCopy.begin() + trainingDatasetSize);
+        DatasetFormat validationDataset(datasetCopy.begin() + trainingDatasetSize,
+                                        datasetCopy.begin() + trainingDatasetSize + validationDatasetSize);
+        DatasetFormat testDataset(datasetCopy.begin() + trainingDatasetSize + validationDatasetSize, datasetCopy.end());
+
+        auto data = std::make_tuple(trainingDataset, validationDataset, testDataset);
+
+        return data;
+    }
+
     /**
      * @brief Train the network on the provided dataset
      *
      * @param dataset - vector of (input_vector, target_label) pairs
      * @return average loss after training
      */
-    double train(const std::vector<std::pair<std::vector<double>, double> > &dataset) {
+    double train(const DatasetFormat &dataset) {
         if (dataset.empty()) {
             throw std::invalid_argument("Dataset cannot be empty");
         }
@@ -96,14 +154,22 @@ public:
             throw std::invalid_argument("Network pointer is null");
         }
 
+        const auto datasets = splitData(dataset);
+        const auto trainingDataset = std::get<0>(datasets);
+        const auto validationDataset = std::get<1>(datasets);
+        const auto testDataset = std::get<2>(datasets);
+
         if (verbose) {
             std::cout << "Training for " << epochs << " epochs..." << std::endl;
-            std::cout << "Dataset size: " << dataset.size() << std::endl;
+            std::cout << "Total Data: " << dataset.size() << std::endl;
+            std::cout << "Training Data: " << trainingDataset.size()
+                    << " | Validation Data: " << validationDataset.size()
+                    << " | Test Data: " << testDataset.size() << std::endl;
             std::cout << "Batch size: " << batchSize << std::endl;
-            std::cout << std::endl;
+            std::cout << "------------------------------------------------" << std::endl;
         }
 
-        double totalLoss = 0.0;
+        double finalTrainingLoss = 0.0;
 
         for (int epoch = 0; epoch < epochs; ++epoch) {
             double epochLoss = 0.0;
@@ -112,8 +178,7 @@ public:
             // Accumulator for gradient averaging within a batch
             std::vector<double> accumulatedGradients(network->parameters().size(), 0.0);
 
-            // Iterate through dataset
-            for (const auto &sample: dataset) {
+            for (const auto &sample: trainingDataset) {
                 const auto &inputs = sample.first;
                 const double target = sample.second;
 
@@ -138,9 +203,8 @@ public:
 
                 ++sampleCount;
 
-                // Update parameters when batch is full or at end of dataset
-                if (sampleCount % batchSize == 0 || sampleCount == static_cast<int>(dataset.size())) {
-                    // Average gradients over batch
+                // Update parameters when batch is full or at end of the training dataset
+                if (sampleCount % batchSize == 0 || sampleCount == static_cast<int>(trainingDataset.size())) {
                     int batchSizeUsed = (sampleCount % batchSize == 0) ? batchSize : (sampleCount % batchSize);
                     for (size_t i = 0; i < params.size(); ++i) {
                         params.at(i)->grad = accumulatedGradients.at(i) / batchSizeUsed;
@@ -156,22 +220,30 @@ public:
                 helper::deleteInputNodes(inputNodes);
             }
 
-            totalLoss = epochLoss;
+            finalTrainingLoss = epochLoss / static_cast<double>(trainingDataset.size());
 
             // Print progress
             if (verbose && (epoch + 1) % printEvery == 0) {
-                double avgLoss = epochLoss / static_cast<double>(dataset.size());
+                // Calculate accuracy on the Validation set
+                const double accuracy = computeAccuracy(validationDataset);
+
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
-                        << " | Loss: " << std::fixed << std::setprecision(6) << avgLoss
+                        << " | Loss: " << std::fixed << std::setprecision(6) << finalTrainingLoss
+                        << " | Accuracy: " << std::setprecision(2) << (accuracy * 100.0) << "%"
                         << std::endl;
             }
         }
 
         if (verbose) {
             std::cout << "\nTraining complete!" << std::endl;
+            std::cout << "Evaluating on Test Set..." << std::endl;
+
+            const double testAccuracy = computeAccuracy(testDataset);
+            std::cout << "Final Test Set Accuracy: " << std::fixed << std::setprecision(2)
+                    << (testAccuracy * 100.0) << "%" << std::endl;
         }
 
-        return totalLoss / static_cast<double>(dataset.size());
+        return finalTrainingLoss;
     }
 };
 
