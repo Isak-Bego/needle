@@ -82,6 +82,10 @@ int main() {
 }
 ```
 
+### Training Results
+
+![img.png](docs/images/img_1.png)
+
 ### 2. Multi-Class Classification
 
 ```cpp
