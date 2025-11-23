@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <iomanip>
+#include <limits>
 #include <autoGradEngine/node.h>
 
 struct ModelMetadata {
@@ -20,36 +22,44 @@ struct ModelMetadata {
     }
 };
 
+/**
+ * The model serializer captures the parameters of a network along with its layer structure and saves them in a .txt file.
+ * Additionally, it offers methods for retrieving that information for creating inference models that help making predictions.
+ */
 class ModelSerializer {
 public:
-    // Save model with metadata
+    // Save model with metadata in text format
     static bool saveWithMetadata(const std::vector<Node *> &parameters,
                                  const ModelMetadata &metadata,
                                  const std::string &filepath) {
-        std::ofstream file(filepath, std::ios::binary);
+        std::ofstream file(filepath); // Text mode by default
         if (!file.is_open()) {
             return false;
         }
 
         // Write metadata
-        file.write(reinterpret_cast<const char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        file << metadata.inputVectorSize << "\n";
 
         size_t hidden_size = metadata.hiddenLayerSizes.size();
-        file.write(reinterpret_cast<const char *>(&hidden_size), sizeof(hidden_size));
+        file << hidden_size << "\n";
 
         for (int layer_size: metadata.hiddenLayerSizes) {
-            file.write(reinterpret_cast<const char *>(&layer_size), sizeof(layer_size));
+            file << layer_size << " ";
         }
+        file << "\n";
 
-        file.write(reinterpret_cast<const char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        file << metadata.totalParameters << "\n";
 
         // Write parameters
         size_t num_params = parameters.size();
-        file.write(reinterpret_cast<const char *>(&num_params), sizeof(num_params));
+        file << num_params << "\n";
+
+        // Use maximum precision to avoid losing accuracy in text conversion
+        file << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10);
 
         for (const Node *param: parameters) {
             if (param) {
-                file.write(reinterpret_cast<const char *>(&param->data), sizeof(param->data));
+                file << param->data << "\n";
             }
         }
 
@@ -59,26 +69,26 @@ public:
 
     // Load model metadata without loading parameters
     static ModelMetadata loadMetadata(const std::string &filepath) {
-        std::ifstream file(filepath, std::ios::binary);
+        std::ifstream file(filepath); // Text mode by default
         if (!file.is_open()) {
-            std::cout<<"Failed to open file: " + filepath;
+            std::cout << "Failed to open file: " + filepath << std::endl;
+            return ModelMetadata();
         }
 
         ModelMetadata metadata;
 
         // Read metadata
-        file.read(reinterpret_cast<char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        if (!(file >> metadata.inputVectorSize)) return ModelMetadata();
 
         size_t hidden_size = 0;
-        file.read(reinterpret_cast<char *>(&hidden_size), sizeof(hidden_size));
+        file >> hidden_size;
 
         metadata.hiddenLayerSizes.resize(hidden_size);
         for (size_t i = 0; i < hidden_size; ++i) {
-            file.read(reinterpret_cast<char *>(&metadata.hiddenLayerSizes.at(i)),
-                      sizeof(metadata.hiddenLayerSizes.at(i)));
+            file >> metadata.hiddenLayerSizes.at(i);
         }
 
-        file.read(reinterpret_cast<char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        file >> metadata.totalParameters;
 
         file.close();
         return metadata;
@@ -87,40 +97,42 @@ public:
     // Load parameters with validation
     static bool loadWithValidation(std::vector<Node *> &parameters,
                                    const std::string &filepath) {
-        std::ifstream file(filepath, std::ios::binary);
+        std::ifstream file(filepath); // Text mode by default
         if (!file.is_open()) {
             return false;
         }
 
         // Skip metadata section
-        ModelMetadata metadata;
-        file.read(reinterpret_cast<char *>(&metadata.inputVectorSize), sizeof(metadata.inputVectorSize));
+        int inputVectorSize;
+        file >> inputVectorSize;
 
         size_t hidden_size = 0;
-        file.read(reinterpret_cast<char *>(&hidden_size), sizeof(hidden_size));
+        file >> hidden_size;
 
         for (size_t i = 0; i < hidden_size; ++i) {
             int dummy;
-            file.read(reinterpret_cast<char *>(&dummy), sizeof(dummy));
+            file >> dummy;
         }
 
-        file.read(reinterpret_cast<char *>(&metadata.totalParameters), sizeof(metadata.totalParameters));
+        size_t totalParameters;
+        file >> totalParameters;
 
-        // Read parameters
+        // Read parameters count
         size_t num_params = 0;
-        file.read(reinterpret_cast<char *>(&num_params), sizeof(num_params));
+        file >> num_params;
 
         if (num_params != parameters.size()) {
             file.close();
-            std::cout<<
+            std::cout <<
                 "Parameter count mismatch: file has " + std::to_string(num_params) +
-                " parameters but model has " + std::to_string(parameters.size())
-            ;
+                " parameters but model has " + std::to_string(parameters.size()) << std::endl;
+            return false;
         }
 
+        // Read parameter values
         for (Node *param: parameters) {
             if (param) {
-                file.read(reinterpret_cast<char *>(&param->data), sizeof(param->data));
+                file >> param->data;
             }
         }
 

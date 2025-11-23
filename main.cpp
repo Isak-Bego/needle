@@ -21,7 +21,7 @@ int main() {
     );
 
     model.train(0.1, 500, 100, dataset);
-    model.saveModel("irisclassifier.bin");
+    model.saveModel("irisclassifier.txt");
 
     return 0;
 }
