@@ -8,6 +8,8 @@
 #include <autoGradEngine/node.h>
 #include <nnComponents/optimizers/SGD.h>
 #include "utils/helperFunctions.h"
+#include <matplot/matplot.h>
+#include <array>
 
 using DatasetFormat = std::vector<std::pair<std::vector<double>, double> >;
 
@@ -19,6 +21,8 @@ class Trainer {
     int batchSize;
     int printEvery;
     bool verbose;
+    std::vector<double> lossHistory;
+    std::vector<double> accuracyHistory;
 
 public:
     /**
@@ -145,7 +149,7 @@ public:
      * @param dataset - vector of (input_vector, target_label) pairs
      * @return average loss after training
      */
-    double train(const DatasetFormat &dataset) {
+    void train(const DatasetFormat &dataset) {
         if (dataset.empty()) {
             std::cout<<"Dataset cannot be empty";
         }
@@ -158,6 +162,9 @@ public:
         const auto trainingDataset = std::get<0>(datasets);
         const auto validationDataset = std::get<1>(datasets);
         const auto testDataset = std::get<2>(datasets);
+
+        std::vector<double> lossHistory;
+        std::vector<double> accuracyHistory;
 
         if (verbose) {
             std::cout << "Training for " << epochs << " epochs..." << std::endl;
@@ -221,11 +228,13 @@ public:
             }
 
             finalTrainingLoss = epochLoss / static_cast<double>(trainingDataset.size());
+            lossHistory.push_back(finalTrainingLoss);
 
             // Print progress
             if (verbose && (epoch + 1) % printEvery == 0) {
                 // Calculate accuracy on the Validation set
                 const double accuracy = computeAccuracy(validationDataset);
+                this->accuracyHistory.push_back(accuracy);
 
                 std::cout << "Epoch " << std::setw(4) << (epoch + 1)
                         << " | Loss: " << std::fixed << std::setprecision(6) << finalTrainingLoss
@@ -243,7 +252,41 @@ public:
                     << (testAccuracy * 100.0) << "%" << std::endl;
         }
 
-        return finalTrainingLoss;
+        this->lossHistory = lossHistory;
+        printLossGraph();
+    }
+
+    void printLossGraph() {
+        // Create a vector for the epoch numbers (1 to EPOCHS)
+        std::vector<double> epochsVector;
+        epochsVector.reserve(epochs);
+        std::iota(epochsVector.begin(), epochsVector.end(), 1.0);
+
+        matplot::figure();
+
+        // --- Subplot 1: Loss ---
+        matplot::subplot(2, 1, 1);
+        matplot::plot(epochsVector, this->lossHistory, "-r")->line_width(2);
+        matplot::xlabel("Epoch");
+        matplot::ylabel("Loss");
+        matplot::title("Training Loss History");
+        matplot::grid(matplot::on);
+
+        // --- Subplot 2: Accuracy ---
+        matplot::subplot(2, 1, 2);
+
+        // Convert accuracy (0.0 to 1.0) to percentage (0 to 100) for better visualization labels
+        std::vector<double> acurracyPercent = this->accuracyHistory;
+        std::transform(acurracyPercent.begin(), acurracyPercent.end(), acurracyPercent.begin(),
+                       [](const double acc) { return acc * 100.0; });
+
+        matplot::plot(epochsVector, acurracyPercent, "-b")->line_width(2);
+        matplot::xlabel("Epoch");
+        matplot::ylabel("Validation Accuracy (%)");
+        matplot::title("Validation Accuracy History");
+        matplot::ylim(std::array<double, 2>{0, 100}); // Set Y-limit from 0% to 100%
+        matplot::grid(matplot::on);
+        matplot::show(); // Display the plot
     }
 };
 

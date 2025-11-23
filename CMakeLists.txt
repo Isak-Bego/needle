@@ -5,6 +5,17 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(FetchContent)
+
+# ----------------- Matplot++ -----------------
+FetchContent_Declare(
+matplotplusplus
+GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus.git
+GIT_TAG master
+)
+FetchContent_MakeAvailable(matplotplusplus)
+
+
 # -------- My Header-only library --------
 add_library(needle_lib INTERFACE)
 target_include_directories(needle_lib
@@ -15,7 +26,7 @@ target_include_directories(needle_lib
 # -------- Original demo app --------
 add_executable(needle)
 target_sources(needle PRIVATE main.cpp)
-target_link_libraries(needle PRIVATE needle_lib)
+target_link_libraries(needle PRIVATE needle_lib Matplot++::matplot)
 
 
 # -------- GoogleTest --------
@@ -43,6 +54,7 @@ target_link_libraries(tests
         PRIVATE
         needle_lib
         GTest::gtest_main
+        Matplot++::matplot
 )
 
 include(GoogleTest)
