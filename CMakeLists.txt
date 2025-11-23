@@ -35,6 +35,9 @@ add_executable(tests
         tests/unit/test_autoGradEngine.cpp
         tests/unit/test_nnComponents.cpp
         tests/integration/test_models.cpp
+        tests/unit/test_lossFunctions.cpp
+        tests/unit/test_optimizerUtils.cpp
+        tests/unit/test_robustness.cpp
 )
 target_link_libraries(tests
         PRIVATE
