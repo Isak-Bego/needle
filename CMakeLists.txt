@@ -32,9 +32,9 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(tests
-        tests/unit/test_node.cpp
-        tests/unit/test_sigmoid.cpp
-        tests/unit/test_softmax.cpp
+        tests/unit/test_autoGradEngine.cpp
+        tests/unit/test_nnComponents.cpp
+        tests/integration/test_models.cpp
 )
 target_link_libraries(tests
         PRIVATE
