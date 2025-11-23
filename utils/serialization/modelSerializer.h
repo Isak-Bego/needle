@@ -61,7 +61,7 @@ public:
     static ModelMetadata loadMetadata(const std::string &filepath) {
         std::ifstream file(filepath, std::ios::binary);
         if (!file.is_open()) {
-            throw std::runtime_error("Failed to open file: " + filepath);
+            std::cout<<"Failed to open file: " + filepath;
         }
 
         ModelMetadata metadata;
@@ -112,10 +112,10 @@ public:
 
         if (num_params != parameters.size()) {
             file.close();
-            throw std::runtime_error(
+            std::cout<<
                 "Parameter count mismatch: file has " + std::to_string(num_params) +
                 " parameters but model has " + std::to_string(parameters.size())
-            );
+            ;
         }
 
         for (Node *param: parameters) {

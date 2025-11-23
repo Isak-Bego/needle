@@ -15,6 +15,11 @@ enum class Activation {
     SOFTMAX
 };
 
+/**
+ * Neurons get a set of inputs, they calculate the weighted sum and then run it through
+ * an activation function to produce one of the elements of the output vector of a layer. They are the gears that
+ * spin the mechanism of a Multi-Layered Perceptron. 
+ */
 class Neuron final : public Module {
     std::vector<Node *> weights;
     Node *bias;
@@ -30,6 +35,12 @@ public:
         bias = new Node(0.0);
     }
 
+    /**
+     * @brief The core mechanism that is responsible for forward passing. 
+     * 
+     * @param inputVector - The input Nodes that are connected to the neuron, which in our case consist of all the neurons from the previous layer
+     * @return - Returns the activation
+     */
     Node *operator()(const std::vector<Node *> &inputVector) {
         Node *weightedSum = bias;
 
@@ -47,6 +58,10 @@ public:
         }
     }
 
+    /**
+     * 
+     * @return - Returns a list of parameters for a neuron which include all the weights and biases.
+     */
     std::vector<Node *> parameters() override {
         std::vector<Node *> params = weights;
         params.push_back(bias);

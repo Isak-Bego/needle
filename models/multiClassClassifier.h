@@ -10,12 +10,21 @@
 #include "utils/helperFunctions.h"
 
 /**
- * A classification model that can make the distinction between n classes of objects.
+ * This is one of the two template networks that the library provides. The user is provided with a plug-and-play
+ * solution when it comes to classification tasks that involve several categories.
  */
 class MultiClassClassifier final : public Network {
     int numClasses;
 
 public:
+    /**
+     * @brief Constructs the Network with the input layer the size of @p numberOfInputs, the
+     * specified @p hiddenLayerSizes and a linear output layer of size @p numberOfClasses
+     *
+     * @param numberOfInputs
+     * @param hiddenLayerSizes
+     * @param numberOfClasses
+     */
     MultiClassClassifier(const int numberOfInputs,
                          const std::vector<int> &hiddenLayerSizes,
                          const int numberOfClasses)
@@ -23,7 +32,10 @@ public:
           numClasses(numberOfClasses) {
     }
 
-    /// Helper function for creating a multi-class classifier network
+    /**
+     * @brief Builds the structure of the MultiClassClassifier and then packs everything into a data structure that
+     * is accepted by the Network class. The data structure has the form: std::vector<std::pair<int, Activation>>
+     */
     static std::vector<std::pair<int, Activation> > getNetworkSpecs(
         int numberOfInputs,
         const std::vector<int> &hiddenLayerSizes,
@@ -42,6 +54,9 @@ public:
         return networkSpecs;
     }
 
+    /**
+     * @brief Prints necessary information about the network that can help with debugging.
+     */
     std::string representation() const override {
         std::string s = "MultiClassClassifier of [";
         for (size_t i = 0; i < layers.size(); ++i) {
@@ -52,9 +67,12 @@ public:
     }
 
     /**
+     * @brief This function provides all the logic for loading a model from a .bin file, where we have saved
+     * its dimensions and parameters, so that we can use it for making predictions without the need of going
+     * to the training process once again.
      *
      * @param filepath - location of the .bin file that holds the metadata + parameters of a saved model
-     * @return
+     * @return A MultiClassClassifier object that can be used for inferences
      */
     static MultiClassClassifier *loadFromFile(const std::string &filepath) {
         try {
@@ -96,6 +114,8 @@ public:
     }
 
     /**
+     * @brief This function constructs the loss function that should be passed to the training driver, creates
+     * a training driver object and then calls the train() method for the model to start learning.
      *
      * @param learningRate - the rate at which we will be updating the parameters of the network
      * @param epochs - the number of iterations through the training data
@@ -103,7 +123,7 @@ public:
      * @param dataset - the dataset that we are going to be using to train the network
      */
     void train(const double learningRate, const int epochs, const int batchSize,
-               std::vector<std::pair<std::vector<double>, double> > &dataset) override {
+               DatasetFormat &dataset) override {
         // Create loss function lambda that handles softmax + cross-entropy
         auto loss_fn = [this](const std::vector<Node *> &logits, const double target) -> Node *{
             // Apply softmax to logits
@@ -120,6 +140,12 @@ public:
         trainer.train(dataset);
     }
 
+    /**
+     * @brief It is used to make inferences with a trained model.
+     *
+     * @param input - The input vector
+     * @return - The number of the class that was predicted by the model
+     */
     int predict(std::vector<double> &input) override {
         const auto inputNodes = helper::createInputNodes(input);
 
@@ -139,6 +165,9 @@ public:
         return predictedClass;
     }
 
+    /**
+     * @return The metadata for the MultiClass classifier that will be used by the serialization method
+     */
     ModelMetadata getMetadata() override {
         std::vector<int> allLayerSizes;
 

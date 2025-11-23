@@ -6,10 +6,11 @@
 #include <cmath>
 
 /**
- * @brief Based on the value of the scalar values that it gets as an input it creates
+ * @brief Creates the probability distribution of the logits based on their weight. The logit with the greatest value
+ * is assigned a greater probability.
  *
  * @param logits - A vector of scalar values
- * @return
+ * @return - A vector of nodes whose data values add up to 1.
  */
 inline std::vector<Node *> softmax(const std::vector<Node *> &logits) {
     if (logits.empty()) {
@@ -41,7 +42,8 @@ inline std::vector<Node *> softmax(const std::vector<Node *> &logits) {
         double prob = expValues.at(i)->data / sum_exp;
         auto probabilityNode = new Node(prob, logits, "softmax");
 
-        probabilityNode->_backward = [logits, i, sum_exp, expValues, probabilityNode]() {
+        // We define the logic for the backward operator
+        probabilityNode->backwardProp = [logits, i, sum_exp, expValues, probabilityNode]() {
             const double prob_i = probabilityNode->data;
 
             for (size_t j = 0; j < logits.size(); ++j) {

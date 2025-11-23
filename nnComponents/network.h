@@ -5,6 +5,10 @@
 #include <nnComponents/neuron.h>
 #include <utils/serialization/modelSerializer.h>
 
+/**
+ * The network class provides the user with the right amount of flexibility to customize their own Multi-Layer Perceptron,
+ * train it with the desired training parameters, save it a in a binary file and finally use it to make inferences.
+ */
 class Network : public Module {
 protected:
     std::vector<std::pair<int, Activation> > networkSpecs;

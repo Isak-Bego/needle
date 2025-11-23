@@ -15,7 +15,8 @@ inline Node *relu(Node *x) {
     const auto out_data = (self->data < 0.0) ? 0.0 : self->data;
     auto out = new Node(out_data, {self}, "ReLU");
 
-    out->_backward = [self, out]() {
+    // We define the logic for the backward operator
+    out->backwardProp = [self, out]() {
         const double grad_mask = (out->data > 0.0) ? 1.0 : 0.0;
         self->grad += grad_mask * out->grad;
     };

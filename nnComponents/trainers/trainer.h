@@ -51,14 +51,14 @@ public:
      * @brief Set the learning rate
      */
     void setLearningRate(const double lr) {
-        optimizer.set_learning_rate(lr);
+        optimizer.setLearningRate(lr);
     }
 
     /**
      * @brief Get the current learning rate
      */
     double getLearningRate() const {
-        return optimizer.get_learning_rate();
+        return optimizer.getLearningRate();
     }
 
     /**
@@ -147,11 +147,11 @@ public:
      */
     double train(const DatasetFormat &dataset) {
         if (dataset.empty()) {
-            throw std::invalid_argument("Dataset cannot be empty");
+            std::cout<<"Dataset cannot be empty";
         }
 
         if (!network) {
-            throw std::invalid_argument("Network pointer is null");
+            std::cout<<"Network pointer is null";
         }
 
         const auto datasets = splitData(dataset);
