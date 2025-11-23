@@ -43,6 +43,16 @@ cmake --build .
 
 # Run tests
 ./tests
+
+# Make sure to install the following package that is needed 
+# by the plotting library
+
+# If you are on Linux(Debian/Ubuntu)
+sudo apt update
+sudo apt install gnuplot
+
+# If you are on MacOS (using Homebrew)
+brew install gnuplot
 ```
 
 ## Quick Start
@@ -100,6 +110,9 @@ int main() {
     return 0;
 }
 ```
+### Training Results
+
+![img.png](docs/images/img.png)
 
 ## Core Concepts
 
