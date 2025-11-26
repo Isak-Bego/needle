@@ -1,27 +1,22 @@
 #include <vector>
-#include <iostream>
 #include <models/multiClassClassifier.h>
-#include <utils/datasets/irisDataset.h>
 #include "models/binaryClassifier.h"
+#include "utils/datasets/mushroomDataset.h"
 #include "utils/datasets/xorDataset.h"
 
 int main() {
 
-    //Toggle for the binaryClassifier
-    // auto data = XORDataset::get_repeated(20);
-    // BinaryClassifier model(data.at(0).first.size(), {8,8});
-    // model.train(0.15, 10, 1, data);
-    // std::cout<<model.predict(data.at(2).first);
+    auto datasetLoader = MushroomDataset("mushrooms.csv");
+    auto data = datasetLoader.getData();
 
-    auto dataset = IrisDataset::get_repeated(5);
     MultiClassClassifier model(
-        IrisDataset::get_num_features(),
-        {8, 8},
-        IrisDataset::get_num_classes()
+        datasetLoader.getNumFeatures(),
+        {12, 8},
+        datasetLoader.getNumClasses()
     );
 
-    model.train(0.1, 100, 100, dataset);
-    model.saveModel("irisclassifier.txt");
+    model.train(0.15, 20, 30, data);
+    model.saveModel("mushroomClassifier.txt");
 
     return 0;
 }

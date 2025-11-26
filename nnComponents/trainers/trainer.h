@@ -125,6 +125,11 @@ public:
         std::mt19937 g(rd());
         std::shuffle(datasetCopy.begin(), datasetCopy.end(), g);
 
+        if(datasetSize < 5) {
+            auto data = std::make_tuple(dataset, dataset, dataset);
+            return data;
+        }
+
         if (datasetSize < 100) {
             //Ratios 60%-20%-20%
             trainingDatasetSize = static_cast<int>(datasetSize * 0.6);
@@ -268,7 +273,10 @@ public:
         epochsVector.reserve(epochs);
         std::iota(epochsVector.begin(), epochsVector.end(), 1.0);
 
-        matplot::figure();
+        auto f = matplot::figure();
+        f->size(800, 600);
+        f->backend()->run_command("unset warnings");
+        f->ioff();
 
         // --- Subplot 1: Loss ---
         matplot::subplot(2, 1, 1);
@@ -292,7 +300,9 @@ public:
         matplot::title("Validation Accuracy History");
         matplot::ylim(std::array<double, 2>{0, 100}); // Set Y-limit from 0% to 100%
         matplot::grid(matplot::on);
-        matplot::show(); // Display the plot
+
+        f->save("training_graphs.png");
+        f->show();
     }
 };
 

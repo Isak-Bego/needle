@@ -2,15 +2,20 @@
 #define MUSHROOMDATASETLOADER_H
 #include <vector>
 #include <fstream>
+#include <utils/datasets/Dataset.h>
 
-class MushroomDataset {
+class MushroomDataset final : public Dataset {
 public:
-    static std::vector<std::pair<std::vector<double>, double> > get_data() {
+    explicit MushroomDataset(const std::string& filepath) : Dataset(MushroomDataset::loadData(filepath)) {
+        minMaxNormalization(this->data);
+    }
+
+    DatasetFormat loadData(std::string filepath) override{
         std::string line;
         std::vector<std::string> tokenizedRow;
-        std::vector<std::pair<std::vector<double>, double>> data;
+        DatasetFormat data;
         std::vector<double> properties;
-        std::ifstream inputFile("mushrooms.csv");
+        std::ifstream inputFile(filepath);
 
         getline(inputFile, line);
 
@@ -37,6 +42,10 @@ public:
         }
 
         return data;
+    }
+
+    int getNumClasses() override{
+        return 2;
     }
 };
 

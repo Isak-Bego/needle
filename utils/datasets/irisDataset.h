@@ -5,85 +5,63 @@
 #include <algorithm>  // std::shuffle
 #include <random>     // std::mt19937, std::random_device
 
-class IrisDataset {
+#include <utils/datasets/Dataset.h>
+
+class IrisDataset final: public Dataset {
 public:
-    // Simplified Iris dataset with 4 features and 3 classes
-    // Features: [sepal_length, sepal_width, petal_length, petal_width]
-    // Classes: 0 = Setosa, 1 = Versicolor, 2 = Virginica
+    explicit IrisDataset(const std::string& filepath) : Dataset(IrisDataset::loadData(filepath)) {
+        minMaxNormalization(this->data);
+    }
 
-    static std::vector<std::pair<std::vector<double>, double> > get_data() {
-        std::vector<std::pair<std::vector<double>, double> > data;
+     DatasetFormat loadData(std::string filepath) override{
+        std::string line;
+        std::vector<std::string> tokenizedRow;
+        DatasetFormat data;
+        std::vector<double> properties;
+        std::ifstream inputFile(filepath);
 
-        // Class 0: Setosa (normalized values)
-        data.push_back({{0.22, 0.63, 0.07, 0.04}, 0.0});
-        data.push_back({{0.17, 0.42, 0.07, 0.04}, 0.0});
-        data.push_back({{0.11, 0.50, 0.05, 0.04}, 0.0});
-        data.push_back({{0.08, 0.46, 0.08, 0.04}, 0.0});
-        data.push_back({{0.19, 0.67, 0.07, 0.04}, 0.0});
-        data.push_back({{0.31, 0.79, 0.10, 0.08}, 0.0});
-        data.push_back({{0.08, 0.58, 0.07, 0.08}, 0.0});
-        data.push_back({{0.19, 0.58, 0.08, 0.04}, 0.0});
-        data.push_back({{0.03, 0.38, 0.07, 0.04}, 0.0});
-        data.push_back({{0.17, 0.46, 0.08, 0.00}, 0.0});
+        getline(inputFile, line);
 
-        // Class 1: Versicolor
-        data.push_back({{0.69, 0.42, 0.51, 0.38}, 1.0});
-        data.push_back({{0.50, 0.25, 0.46, 0.38}, 1.0});
-        data.push_back({{0.69, 0.50, 0.59, 0.50}, 1.0});
-        data.push_back({{0.42, 0.29, 0.49, 0.46}, 1.0});
-        data.push_back({{0.58, 0.50, 0.49, 0.42}, 1.0});
-        data.push_back({{0.53, 0.38, 0.51, 0.42}, 1.0});
-        data.push_back({{0.47, 0.42, 0.46, 0.42}, 1.0});
-        data.push_back({{0.67, 0.46, 0.56, 0.42}, 1.0});
-        data.push_back({{0.56, 0.46, 0.49, 0.38}, 1.0});
-        data.push_back({{0.50, 0.33, 0.46, 0.38}, 1.0});
+        while(getline(inputFile, line)) {
+            size_t start = 0;
+            for (size_t i = 0; i < line.length(); i++) {
+                if(line.at(i) == ',') {
+                    tokenizedRow.push_back(line.substr(start, i-start));
+                    start = i + 1;
+                }else if(i == line.length()-1) {
+                    tokenizedRow.push_back(line.substr(start, i+1-start));
+                }
+            }
 
-        // Class 2: Virginica
-        data.push_back({{0.72, 0.50, 0.69, 0.67}, 2.0});
-        data.push_back({{0.58, 0.42, 0.63, 0.75}, 2.0});
-        data.push_back({{0.75, 0.50, 0.76, 0.75}, 2.0});
-        data.push_back({{0.64, 0.42, 0.68, 0.67}, 2.0});
-        data.push_back({{0.78, 0.58, 0.81, 0.83}, 2.0});
-        data.push_back({{0.86, 0.42, 0.85, 0.92}, 2.0});
-        data.push_back({{0.64, 0.33, 0.69, 0.58}, 2.0});
-        data.push_back({{0.72, 0.42, 0.75, 0.83}, 2.0});
-        data.push_back({{0.69, 0.38, 0.71, 0.75}, 2.0});
-        data.push_back({{0.67, 0.46, 0.68, 0.71}, 2.0});
+            for(size_t j = 1; j < tokenizedRow.size()-1; j++) {
+                auto value = std::stod(tokenizedRow.at(j));
+                properties.push_back(value);
+            }
 
-        // Shuffle the dataset
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::shuffle(data.begin(), data.end(), g);
+            double irisClass;
+            const std::string className = tokenizedRow.at(tokenizedRow.size()-1);
+
+            if(className == "Iris-setosa") {
+                irisClass = 0;
+            }else if(className == "Iris-versicolor") {
+                irisClass = 1;
+            }else {
+                irisClass = 2;
+            }
+
+            data.emplace_back(properties, irisClass);
+            properties.clear();
+            tokenizedRow.clear();
+        }
 
         return data;
     }
 
-
-    // Returns the full dataset repeated n times (for multiple epochs)
-    static std::vector<std::pair<std::vector<double>, double> > get_repeated(int n) {
-        auto base_data = get_data();
-        std::vector<std::pair<std::vector<double>, double> > repeated;
-        repeated.reserve(base_data.size() * n);
-
-        for (int i = 0; i < n; ++i) {
-            repeated.insert(repeated.end(), base_data.begin(), base_data.end());
-        }
-
-        return repeated;
-    }
-
-    // Get number of features
-    static int get_num_features() {
-        return 4;
-    }
-
-    // Get number of classes
-    static int get_num_classes() {
+    int getNumClasses() override{
         return 3;
     }
 
-    // Get class names for interpretation
-    static std::vector<std::string> get_class_names() {
+    static std::vector<std::string> getClassNames() {
         return {"Setosa", "Versicolor", "Virginica"};
     }
 };
