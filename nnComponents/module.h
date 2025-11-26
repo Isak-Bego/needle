@@ -18,7 +18,7 @@ public:
     }
 
     // Clears all the gradients of the parameters so that they are ready for the next backward pass
-    void clear_gradients() {
+    void clearGradients() {
         for (Node *p: parameters()) {
             if (p) p->grad = 0.0;
         }

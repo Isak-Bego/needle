@@ -87,6 +87,12 @@ public:
         verbose = enable;
     }
 
+    /**
+     * @brief Computes the average accuracy of the model based on its predictions for the Training Set.
+     *
+     * @param subset - The training set
+     * @return - The accuracy measure which is in the interval (0, 1)
+     */
     double computeAccuracy(const DatasetFormat &subset) {
 
         if (subset.empty()) return 0.0;
@@ -199,7 +205,7 @@ public:
                 epochLoss += loss->data;
 
                 // Backward pass
-                network->clear_gradients();
+                network->clearGradients();
                 loss->backward();
 
                 // Accumulate gradients
@@ -253,10 +259,10 @@ public:
         }
 
         this->lossHistory = lossHistory;
-        printLossGraph();
+        printTrainingGraphs();
     }
 
-    void printLossGraph() {
+    void printTrainingGraphs() {
         // Create a vector for the epoch numbers (1 to EPOCHS)
         std::vector<double> epochsVector;
         epochsVector.reserve(epochs);

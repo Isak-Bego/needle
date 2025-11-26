@@ -49,7 +49,7 @@ TEST(Module, ClearGradientsResetsToZero) {
     params.at(1)->grad = -3.3;
 
     //When
-    model.clear_gradients();
+    model.clearGradients();
 
     //Then
     EXPECT_DOUBLE_EQ(params.at(0)->grad, 0.0);
