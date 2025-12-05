@@ -119,10 +119,6 @@ public:
     int predict(std::vector<double> &input) override {
         auto inputNodes = helper::createInputNodes(input);
 
-        for (const double val: input) {
-            inputNodes.push_back(new Node(val));
-        }
-
         const Node *n = (*this)(inputNodes).at(0);
         auto prediction = n->data;
 

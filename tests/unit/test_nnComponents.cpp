@@ -2,7 +2,7 @@
 #include <nnComponents/neuron.h>
 #include <nnComponents/layer.h>
 #include <nnComponents/activations/relu.h>
-#include <nnComponents/activations/simoidNode.h>
+#include <nnComponents/activations/sigmoidNode.h>
 #include <vector>
 
 TEST(Activations, ReLUZeroesNegative) {

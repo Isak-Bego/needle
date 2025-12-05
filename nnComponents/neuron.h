@@ -2,7 +2,7 @@
 #define NEURON_H
 #include <random>
 #include <nnComponents/module.h>
-#include <nnComponents/activations/simoidNode.h>
+#include <nnComponents/activations/sigmoidNode.h>
 #include "activations/relu.h"
 #include "utils/randomGenerators/randomBiasGenerator.h"
 #include "utils/randomGenerators/randomWeightGenerator.h"

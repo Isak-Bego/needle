@@ -1,6 +1,7 @@
 #include <vector>
 #include <models/multiClassClassifier.h>
 #include "models/binaryClassifier.h"
+#include "utils/datasets/irisDataset.h"
 #include "utils/datasets/mushroomDataset.h"
 #include "utils/datasets/xorDataset.h"
 
@@ -15,7 +16,7 @@ int main() {
         datasetLoader.getNumClasses()
     );
 
-    model.train(0.15, 20, 30, data);
+    model.train(0.15, 10, 30, data);
     model.saveModel("mushroomClassifier.txt");
 
     return 0;

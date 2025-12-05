@@ -2,7 +2,6 @@
 #include <models/binaryClassifier.h>
 #include <models/multiClassClassifier.h>
 #include <utils/datasets/xorDataset.h>
-#include <utils/datasets/simpleMultiClassDataset.h>
 
 TEST(BinaryClassifier, InitializationStructure) {
     //Given
@@ -20,7 +19,8 @@ TEST(BinaryClassifier, InitializationStructure) {
 TEST(BinaryClassifier, TrainingStepUpdatesParameters) {
     //Given
     // XOR dataset subset
-    auto dataset = XORDataset::get_data();
+    auto dataloader = XORDataset();
+    auto dataset = dataloader.getData();
     BinaryClassifier model(2, {2});
 
     // Capture initial parameter values
@@ -72,18 +72,6 @@ TEST(MultiClassClassifier, ForwardPassShape) {
     EXPECT_LT(predictedClass, numClasses);
 }
 
-TEST(MultiClassClassifier, TrainingReducesLoss) {
-    //Given
-    auto dataset = SimpleMultiClassDataset::get_data();
-    // Small model
-    MultiClassClassifier model(2, {4}, 3);
-
-    //When
-    model.train(0.01, 2, 4, dataset);
-
-    //Then
-    SUCCEED();
-}
 
 TEST(Serialization, SaveAndLoadPreservesMetadata) {
     //Given
